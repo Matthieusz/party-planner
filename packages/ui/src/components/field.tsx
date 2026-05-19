@@ -1,8 +1,8 @@
 import { Label } from "@party-planner/ui/components/label";
 import { Separator } from "@party-planner/ui/components/separator";
 import { cn } from "@party-planner/ui/lib/utils";
-import { cva } from 'class-variance-authority';
-import type { VariantProps } from 'class-variance-authority';
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import { useMemo } from "react";
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {

@@ -4,8 +4,8 @@ import { Button } from "@party-planner/ui/components/button";
 import { Input } from "@party-planner/ui/components/input";
 import { Textarea } from "@party-planner/ui/components/textarea";
 import { cn } from "@party-planner/ui/lib/utils";
-import { cva } from 'class-variance-authority';
-import type { VariantProps } from 'class-variance-authority';
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {

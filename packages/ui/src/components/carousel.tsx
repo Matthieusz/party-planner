@@ -4,8 +4,8 @@ import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@party-planner/ui/components/button";
 import { cn } from "@party-planner/ui/lib/utils";
-import useEmblaCarousel from 'embla-carousel-react';
-import type { UseEmblaCarouselType } from 'embla-carousel-react';
+import useEmblaCarousel from "embla-carousel-react";
+import type { UseEmblaCarouselType } from "embla-carousel-react";
 import * as React from "react";
 
 type CarouselApi = UseEmblaCarouselType[1];
@@ -61,7 +61,9 @@ function Carousel({
   const [canScrollNext, setCanScrollNext] = React.useState(false);
 
   const onSelect = React.useCallback((api: CarouselApi) => {
-    if (!api) {return;}
+    if (!api) {
+      return;
+    }
     setCanScrollPrev(api.canScrollPrev());
     setCanScrollNext(api.canScrollNext());
   }, []);
@@ -88,12 +90,16 @@ function Carousel({
   );
 
   React.useEffect(() => {
-    if (!api || !setApi) {return;}
+    if (!api || !setApi) {
+      return;
+    }
     setApi(api);
   }, [api, setApi]);
 
   React.useEffect(() => {
-    if (!api) {return;}
+    if (!api) {
+      return;
+    }
     onSelect(api);
     api.on("reInit", onSelect);
     api.on("select", onSelect);
@@ -106,7 +112,7 @@ function Carousel({
   return (
     <CarouselContext.Provider
       value={{
-        api: api,
+        api,
         canScrollNext,
         canScrollPrev,
         carouselRef,
