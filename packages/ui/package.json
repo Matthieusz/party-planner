@@ -14,7 +14,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@base-ui/react": "^1.4.1",
+    "@base-ui/react": "^1.5.0",
     "@fontsource-variable/noto-serif": "^5.2.9",
     "@fontsource-variable/nunito-sans": "^5.2.7",
     "@hugeicons/core-free-icons": "^4.1.4",
@@ -27,9 +27,9 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.546.0",
     "next-themes": "catalog:",
-    "react": "^19.2.3",
+    "react": "^19.2.6",
     "react-day-picker": "^10.0.1",
-    "react-dom": "^19.2.3",
+    "react-dom": "^19.2.6",
     "react-resizable-panels": "^4.11.1",
     "recharts": "3.8.0",
     "shadcn": "^4.7.0",
@@ -40,9 +40,9 @@
   },
   "devDependencies": {
     "@party-planner/config": "workspace:*",
-    "@types/react": "^19.2.10",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "catalog:",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "^4.3.0",
     "typescript": "catalog:"
   }
 }
