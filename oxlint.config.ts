@@ -4,4 +4,9 @@ import react from "ultracite/oxlint/react";
 
 export default defineConfig({
   extends: [core, react],
+  ignorePatterns: [
+    "apps/web/src/routeTree.gen.ts",
+    "apps/fumadocs/src/routeTree.gen.ts",
+    "packages/ui/*",
+  ],
 });
