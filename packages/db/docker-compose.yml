@@ -1,0 +1,23 @@
+name: party-planner
+
+services:
+  postgres:
+    image: postgres
+    container_name: party-planner-postgres
+    environment:
+      POSTGRES_DB: party-planner
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - party-planner_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  party-planner_postgres_data:

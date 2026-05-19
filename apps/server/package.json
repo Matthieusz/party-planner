@@ -1,0 +1,34 @@
+{
+  "name": "server",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsdown",
+    "check-types": "tsc -b",
+    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.mjs"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.4",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "@party-planner/api": "workspace:*",
+    "@party-planner/auth": "workspace:*",
+    "@party-planner/db": "workspace:*",
+    "@party-planner/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "evlog": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@party-planner/config": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "^0.21.9",
+    "tsx": "^4.19.2",
+    "typescript": "catalog:"
+  }
+}

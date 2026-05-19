@@ -1,0 +1,24 @@
+{
+  "name": "@party-planner/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@party-planner/db": "workspace:*",
+    "@party-planner/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@party-planner/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

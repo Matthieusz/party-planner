@@ -1,0 +1,6 @@
+{
+  "extends": "@party-planner/config/tsconfig.base.json",
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
+}

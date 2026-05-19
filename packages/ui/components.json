@@ -1,0 +1,25 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "base-luma",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "hugeicons",
+  "aliases": {
+    "components": "@party-planner/ui/components",
+    "utils": "@party-planner/ui/lib/utils",
+    "hooks": "@party-planner/ui/hooks",
+    "lib": "@party-planner/ui/lib",
+    "ui": "@party-planner/ui/components"
+  },
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {},
+  "rtl": false
+}

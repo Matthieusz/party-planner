@@ -1,0 +1,42 @@
+{
+  "name": "party-planner",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:web": "turbo -F web dev",
+    "dev:server": "turbo -F server dev",
+    "db:push": "turbo -F @party-planner/db db:push",
+    "db:studio": "turbo -F @party-planner/db db:studio",
+    "db:generate": "turbo -F @party-planner/db db:generate",
+    "db:migrate": "turbo -F @party-planner/db db:migrate",
+    "db:start": "turbo -F @party-planner/db db:start",
+    "db:watch": "turbo -F @party-planner/db db:watch",
+    "db:stop": "turbo -F @party-planner/db db:stop",
+    "db:down": "turbo -F @party-planner/db db:down",
+    "check": "ultracite check",
+    "fix": "ultracite fix"
+  },
+  "dependencies": {
+    "@party-planner/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@party-planner/config": "workspace:*",
+    "@types/node": "catalog:",
+    "lefthook": "latest",
+    "oxfmt": "latest",
+    "oxlint": "latest",
+    "turbo": "^2.8.12",
+    "typescript": "catalog:",
+    "ultracite": "7.7.0"
+  },
+  "packageManager": "pnpm@11.1.3"
+}
