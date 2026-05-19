@@ -19,16 +19,6 @@ import { baseOptions } from "@/lib/layout.shared";
 import { gitConfig } from "@/lib/shared";
 import { slugsToMarkdownPath, source } from "@/lib/source";
 
-export const Route = createFileRoute("/docs/$")({
-  component: Page,
-  loader: async ({ params }) => {
-    const slugs = params._splat?.split("/") ?? [];
-    const data = await loader({ data: slugs });
-    await clientLoader.preload(data.path);
-    return data;
-  },
-});
-
 const loader = createServerFn({
   method: "GET",
 })
@@ -78,8 +68,9 @@ const clientLoader = browserCollections.docs.createClientLoader({
   },
 });
 
-function Page() {
+const Page = () => {
   const { pageTree, path, markdownUrl } = useFumadocsLoader(
+    // eslint-disable-next-line no-use-before-define
     Route.useLoaderData()
   );
 
@@ -91,4 +82,14 @@ function Page() {
       </Suspense>
     </DocsLayout>
   );
-}
+};
+
+export const Route = createFileRoute("/docs/$")({
+  component: Page,
+  loader: async ({ params }) => {
+    const slugs = params._splat?.split("/") ?? [];
+    const data = await loader({ data: slugs });
+    await clientLoader.preload(data.path);
+    return data;
+  },
+});

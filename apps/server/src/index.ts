@@ -1,3 +1,4 @@
+import { serve } from "@hono/node-server";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
@@ -46,6 +47,7 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
   interceptors: [
+    // eslint-disable-next-line promise/prefer-await-to-callbacks
     onError((error) => {
       console.error(error);
     }),
@@ -59,6 +61,7 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
 
 export const rpcHandler = new RPCHandler(appRouter, {
   interceptors: [
+    // eslint-disable-next-line promise/prefer-await-to-callbacks
     onError((error) => {
       console.error(error);
     }),
@@ -90,8 +93,6 @@ app.use("/*", async (c, next) => {
 });
 
 app.get("/", (c) => c.text("OK"));
-
-import { serve } from "@hono/node-server";
 
 serve(
   {

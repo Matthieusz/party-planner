@@ -4,7 +4,7 @@ import { env } from "@party-planner/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-export function createAuth() {
+export const createAuth = () => {
   const db = createDb();
 
   return betterAuth({
@@ -28,6 +28,6 @@ export function createAuth() {
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: [env.CORS_ORIGIN],
   });
-}
+};
 
 export const auth = createAuth();

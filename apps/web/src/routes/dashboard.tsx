@@ -4,22 +4,8 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { getUser } from "@/functions/get-user";
 import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute("/dashboard")({
-  beforeLoad: async () => {
-    const session = await getUser();
-    return { session };
-  },
-  component: RouteComponent,
-  loader: async ({ context }) => {
-    if (!context.session) {
-      throw redirect({
-        to: "/login",
-      });
-    }
-  },
-});
-
-function RouteComponent() {
+const RouteComponent = () => {
+  // eslint-disable-next-line no-use-before-define
   const { session } = Route.useRouteContext();
 
   const privateData = useQuery(orpc.privateData.queryOptions());
@@ -31,4 +17,19 @@ function RouteComponent() {
       <p>API: {privateData.data?.message}</p>
     </div>
   );
-}
+};
+
+export const Route = createFileRoute("/dashboard")({
+  beforeLoad: async () => {
+    const session = await getUser();
+    return { session };
+  },
+  component: RouteComponent,
+  loader: ({ context }) => {
+    if (!context.session) {
+      throw redirect({
+        to: "/login",
+      });
+    }
+  },
+});
