@@ -36,7 +36,9 @@ const loader = createServerFn({
   .middleware([staticFunctionMiddleware])
   .handler(async ({ data: slugs }) => {
     const page = source.getPage(slugs);
-    if (!page) {throw notFound();}
+    if (!page) {
+      throw notFound();
+    }
 
     return {
       markdownUrl: slugsToMarkdownPath(page.slugs).url,

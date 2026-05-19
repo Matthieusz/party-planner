@@ -14,6 +14,7 @@ import appCss from "@/styles/app.css?url";
 export const Route = createRootRoute({
   component: RootComponent,
   head: () => ({
+    links: [{ rel: "stylesheet", href: appCss }],
     meta: [
       {
         charSet: "utf-8",
@@ -26,7 +27,6 @@ export const Route = createRootRoute({
         title: "Fumadocs on TanStack Start",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
   }),
 });
 

@@ -1,8 +1,17 @@
 "use client";
 import { create } from "@orama/orama";
 import { useDocsSearch } from "fumadocs-core/search/client";
-import { SearchDialog, SearchDialogClose, SearchDialogContent, SearchDialogHeader, SearchDialogIcon, SearchDialogInput, SearchDialogList, SearchDialogOverlay } from 'fumadocs-ui/components/dialog/search';
-import type { SharedProps } from 'fumadocs-ui/components/dialog/search';
+import {
+  SearchDialog,
+  SearchDialogClose,
+  SearchDialogContent,
+  SearchDialogHeader,
+  SearchDialogIcon,
+  SearchDialogInput,
+  SearchDialogList,
+  SearchDialogOverlay,
+} from "fumadocs-ui/components/dialog/search";
+import type { SharedProps } from "fumadocs-ui/components/dialog/search";
 import { useI18n } from "fumadocs-ui/contexts/i18n";
 
 function initOrama() {

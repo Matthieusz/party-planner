@@ -1,22 +1,21 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Command as CommandPrimitive } from "cmdk"
-
-import { cn } from "@party-planner/ui/lib/utils"
+import { SearchIcon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@party-planner/ui/components/dialog"
+} from "@party-planner/ui/components/dialog";
 import {
   InputGroup,
   InputGroupAddon,
-} from "@party-planner/ui/components/input-group"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { SearchIcon, Tick02Icon } from "@hugeicons/core-free-icons"
+} from "@party-planner/ui/components/input-group";
+import { cn } from "@party-planner/ui/lib/utils";
+import { Command as CommandPrimitive } from "cmdk";
+import * as React from "react";
 
 function Command({
   className,
@@ -31,7 +30,7 @@ function Command({
       )}
       {...props}
     />
-  )
+  );
 }
 
 function CommandDialog({
@@ -42,11 +41,11 @@ function CommandDialog({
   showCloseButton = false,
   ...props
 }: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
-  title?: string
-  description?: string
-  className?: string
-  showCloseButton?: boolean
-  children: React.ReactNode
+  title?: string;
+  description?: string;
+  className?: string;
+  showCloseButton?: boolean;
+  children: React.ReactNode;
 }) {
   return (
     <Dialog {...props}>
@@ -64,7 +63,7 @@ function CommandDialog({
         {children}
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 function CommandInput({
@@ -83,11 +82,15 @@ function CommandInput({
           {...props}
         />
         <InputGroupAddon>
-          <HugeiconsIcon icon={SearchIcon} strokeWidth={2} className="size-4 shrink-0 opacity-50" />
+          <HugeiconsIcon
+            icon={SearchIcon}
+            strokeWidth={2}
+            className="size-4 shrink-0 opacity-50"
+          />
         </InputGroupAddon>
       </InputGroup>
     </div>
-  )
+  );
 }
 
 function CommandList({
@@ -103,7 +106,7 @@ function CommandList({
       )}
       {...props}
     />
-  )
+  );
 }
 
 function CommandEmpty({
@@ -116,7 +119,7 @@ function CommandEmpty({
       className={cn("py-6 text-center text-sm", className)}
       {...props}
     />
-  )
+  );
 }
 
 function CommandGroup({
@@ -132,7 +135,7 @@ function CommandGroup({
       )}
       {...props}
     />
-  )
+  );
 }
 
 function CommandSeparator({
@@ -145,7 +148,7 @@ function CommandSeparator({
       className={cn("my-1.5 h-px bg-border/50", className)}
       {...props}
     />
-  )
+  );
 }
 
 function CommandItem({
@@ -163,9 +166,13 @@ function CommandItem({
       {...props}
     >
       {children}
-      <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="ml-auto opacity-0 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:opacity-100" />
+      <HugeiconsIcon
+        icon={Tick02Icon}
+        strokeWidth={2}
+        className="ml-auto opacity-0 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:opacity-100"
+      />
     </CommandPrimitive.Item>
-  )
+  );
 }
 
 function CommandShortcut({
@@ -181,7 +188,7 @@ function CommandShortcut({
       )}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -194,4 +201,4 @@ export {
   CommandItem,
   CommandShortcut,
   CommandSeparator,
-}
+};

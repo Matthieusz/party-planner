@@ -10,14 +10,6 @@ export default defineConfig({
     mdx(),
     tailwindcss(),
     tanstackStart({
-      spa: {
-        enabled: true,
-        prerender: {
-          enabled: true,
-          crawlLinks: true,
-        },
-      },
-
       pages: [
         {
           path: "/docs",
@@ -32,6 +24,14 @@ export default defineConfig({
           path: "llms.txt",
         },
       ],
+
+      spa: {
+        enabled: true,
+        prerender: {
+          crawlLinks: true,
+          enabled: true,
+        },
+      },
     }),
     react(),
     // please see https://tanstack.com/start/latest/docs/framework/react/guide/hosting#nitro for guides on hosting

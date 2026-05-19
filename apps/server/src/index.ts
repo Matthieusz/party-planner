@@ -8,10 +8,10 @@ import { appRouter } from "@party-planner/api/routers/index";
 import { auth } from "@party-planner/auth";
 import { env } from "@party-planner/env/server";
 import { initLogger } from "evlog";
-import { createAuthMiddleware } from 'evlog/better-auth';
-import type { BetterAuthInstance } from 'evlog/better-auth';
-import { evlog } from 'evlog/hono';
-import type { EvlogVariables } from 'evlog/hono';
+import { createAuthMiddleware } from "evlog/better-auth";
+import type { BetterAuthInstance } from "evlog/better-auth";
+import { evlog } from "evlog/hono";
+import type { EvlogVariables } from "evlog/hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -69,7 +69,7 @@ app.use("/*", async (c, next) => {
   const context = await createContext({ context: c });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
-    context: context,
+    context,
     prefix: "/rpc",
   });
 
@@ -78,7 +78,7 @@ app.use("/*", async (c, next) => {
   }
 
   const apiResult = await apiHandler.handle(c.req.raw, {
-    context: context,
+    context,
     prefix: "/api-reference",
   });
 

@@ -28,8 +28,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     links: [
       {
-        rel: "stylesheet",
         href: appCss,
+        rel: "stylesheet",
       },
     ],
     meta: [
@@ -37,8 +37,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         charSet: "utf-8",
       },
       {
-        name: "viewport",
         content: "width=device-width, initial-scale=1",
+        name: "viewport",
       },
       {
         title: "My App",

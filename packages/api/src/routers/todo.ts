@@ -8,28 +8,20 @@ import { publicProcedure } from "../index";
 export const todoRouter = {
   create: publicProcedure
     .input(z.object({ text: z.string().min(1) }))
-    .handler(async ({ input }) => {
-      return await db.insert(todo).values({
+    .handler(async ({ input }) => await db.insert(todo).values({
         text: input.text,
-      });
-    }),
+      })),
 
   delete: publicProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      return await db.delete(todo).where(eq(todo.id, input.id));
-    }),
+    .handler(async ({ input }) => await db.delete(todo).where(eq(todo.id, input.id))),
 
-  getAll: publicProcedure.handler(async () => {
-    return await db.select().from(todo);
-  }),
+  getAll: publicProcedure.handler(async () => await db.select().from(todo)),
 
   toggle: publicProcedure
-    .input(z.object({ id: z.number(), completed: z.boolean() }))
-    .handler(async ({ input }) => {
-      return await db
+    .input(z.object({ completed: z.boolean(), id: z.number() }))
+    .handler(async ({ input }) => await db
         .update(todo)
         .set({ completed: input.completed })
-        .where(eq(todo.id, input.id));
-    }),
+        .where(eq(todo.id, input.id))),
 };

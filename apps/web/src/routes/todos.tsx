@@ -11,8 +11,8 @@ import { Input } from "@party-planner/ui/components/input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Trash2 } from "lucide-react";
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useState } from "react";
+import type { FormEvent } from "react";
 
 import { orpc } from "@/utils/orpc";
 
