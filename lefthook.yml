@@ -5,6 +5,7 @@ pre-commit:
   parallel: true
   jobs:
     - name: oxlint
+      glob: "*.{ts,tsx,js,jsx,mjs,cjs}"
       run: pnpm oxlint --fix {staged_files}
       stage_fixed: true
     - name: oxfmt
