@@ -21,7 +21,10 @@
     "db:stop": "turbo -F @party-planner/db db:stop",
     "db:down": "turbo -F @party-planner/db db:down",
     "check": "ultracite check",
-    "fix": "ultracite fix"
+    "fix": "ultracite fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@party-planner/env": "workspace:*",
@@ -30,13 +33,16 @@
   },
   "devDependencies": {
     "@party-planner/config": "workspace:*",
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "^4.1.7",
     "lefthook": "latest",
     "oxfmt": "latest",
     "oxlint": "latest",
     "turbo": "^2.9.15",
     "typescript": "catalog:",
-    "ultracite": "7.7.0"
+    "ultracite": "7.7.0",
+    "vitest": "^4.1.7"
   },
   "packageManager": "pnpm@11.4.0"
 }
