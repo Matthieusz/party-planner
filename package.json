@@ -44,5 +44,5 @@
     "ultracite": "7.7.0",
     "vitest": "^4.1.8"
   },
-  "packageManager": "pnpm@11.5.0"
+  "packageManager": "pnpm@11.5.1"
 }
