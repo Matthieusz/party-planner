@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-03T00:00:00Z",
+  "title": "Design System: Party Planner",
+  "extensions": {
+    "colorMeta": {
+      "vivid-indigo": {
+        "role": "primary",
+        "displayName": "Vivid Indigo",
+        "canonical": "oklch(0.457 0.24 277.023)",
+        "tonalRamp": [
+          "oklch(15% 0.08 277.023)",
+          "oklch(25% 0.15 277.023)",
+          "oklch(35% 0.20 277.023)",
+          "oklch(0.457 0.24 277.023)",
+          "oklch(55% 0.22 277.023)",
+          "oklch(70% 0.15 277.023)",
+          "oklch(85% 0.08 277.023)",
+          "oklch(95% 0.03 277.023)"
+        ]
+      },
+      "indigo-ink": {
+        "role": "primary-foreground",
+        "displayName": "Indigo Ink",
+        "canonical": "oklch(0.962 0.018 272.314)",
+        "tonalRamp": [
+          "oklch(70% 0.01 272.314)",
+          "oklch(80% 0.015 272.314)",
+          "oklch(88% 0.018 272.314)",
+          "oklch(0.962 0.018 272.314)",
+          "oklch(96% 0.015 272.314)",
+          "oklch(97% 0.012 272.314)",
+          "oklch(98% 0.008 272.314)",
+          "oklch(99% 0.005 272.314)"
+        ]
+      },
+      "warm-ash": {
+        "role": "secondary",
+        "displayName": "Warm Ash",
+        "canonical": "oklch(0.967 0.001 286.375)",
+        "tonalRamp": [
+          "oklch(70% 0.001 286.375)",
+          "oklch(80% 0.001 286.375)",
+          "oklch(88% 0.001 286.375)",
+          "oklch(0.967 0.001 286.375)",
+          "oklch(97% 0.001 286.375)",
+          "oklch(98% 0.001 286.375)",
+          "oklch(99% 0 0)",
+          "oklch(99.5% 0 0)"
+        ]
+      },
+      "signal-red": {
+        "role": "destructive",
+        "displayName": "Signal Red",
+        "canonical": "oklch(0.577 0.245 27.325)",
+        "tonalRamp": [
+          "oklch(20% 0.08 27.325)",
+          "oklch(30% 0.15 27.325)",
+          "oklch(45% 0.20 27.325)",
+          "oklch(0.577 0.245 27.325)",
+          "oklch(65% 0.20 27.325)",
+          "oklch(75% 0.15 27.325)",
+          "oklch(88% 0.08 27.325)",
+          "oklch(95% 0.03 27.325)"
+        ]
+      },
+      "near-white": {
+        "role": "background",
+        "displayName": "Near-White",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(85% 0 0)",
+          "oklch(90% 0 0)",
+          "oklch(93% 0 0)",
+          "oklch(96% 0 0)",
+          "oklch(98% 0 0)",
+          "oklch(99% 0 0)",
+          "oklch(99.5% 0 0)",
+          "oklch(1 0 0)"
+        ]
+      },
+      "ink": {
+        "role": "foreground",
+        "displayName": "Ink",
+        "canonical": "oklch(0.145 0 0)",
+        "tonalRamp": [
+          "oklch(10% 0 0)",
+          "oklch(0.145 0 0)",
+          "oklch(20% 0 0)",
+          "oklch(30% 0 0)",
+          "oklch(40% 0 0)",
+          "oklch(50% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(70% 0 0)"
+        ]
+      },
+      "fog": {
+        "role": "border",
+        "displayName": "Fog",
+        "canonical": "oklch(0.922 0 0)",
+        "tonalRamp": [
+          "oklch(70% 0 0)",
+          "oklch(80% 0 0)",
+          "oklch(85% 0 0)",
+          "oklch(0.922 0 0)",
+          "oklch(94% 0 0)",
+          "oklch(96% 0 0)",
+          "oklch(97% 0 0)",
+          "oklch(98% 0 0)"
+        ]
+      },
+      "graphite": {
+        "role": "muted-foreground",
+        "displayName": "Graphite",
+        "canonical": "oklch(0.556 0 0)",
+        "tonalRamp": [
+          "oklch(30% 0 0)",
+          "oklch(40% 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(65% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(75% 0 0)",
+          "oklch(80% 0 0)"
+        ]
+      },
+      "sidebar-accent": {
+        "role": "sidebar-primary",
+        "displayName": "Sidebar Accent",
+        "canonical": "oklch(0.511 0.262 276.966)",
+        "tonalRamp": [
+          "oklch(20% 0.08 276.966)",
+          "oklch(35% 0.15 276.966)",
+          "oklch(45% 0.22 276.966)",
+          "oklch(0.511 0.262 276.966)",
+          "oklch(60% 0.22 276.966)",
+          "oklch(70% 0.15 276.966)",
+          "oklch(85% 0.08 276.966)",
+          "oklch(95% 0.03 276.966)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles, section headers, hero headlines. Noto Serif Variable. One per major view."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraphs, descriptions, form labels, table cells. Nunito Sans Variable. Max 65–75ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, timestamps, status indicators, micro-copy. Nunito Sans Variable. Uppercase only for status badges."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ambient-card",
+        "value": "0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 0 0 1px oklch(0.145 0 0 / 0.05)",
+        "purpose": "Cards containing active work — forms, todo lists, editable content. Diffuse lift with hairline edge."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 3px oklch(0.708 0 0 / 0.3)",
+        "purpose": "Focus-visible states on buttons, inputs, and interactive elements. Neutral gray."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for state transitions (hover, focus, active)."
+      },
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Quick feedback: button presses, checkbox toggles."
+      },
+      {
+        "name": "duration-normal",
+        "value": "200ms",
+        "purpose": "Standard transitions: hover backgrounds, border color shifts."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main call-to-action. Vivid indigo, pill-shaped, 36px height. Used for save, submit, create, and primary navigation.",
+      "html": "<button class=\"ds-btn-primary\">Create Event</button>",
+      "css": ".ds-btn-primary { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 2.825rem; border: 1px solid transparent; background-clip: padding-box; font-family: 'Nunito Sans Variable', system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); outline: none; user-select: none; height: 2.25rem; gap: 0.375rem; padding: 0 0.75rem; background: oklch(0.457 0.24 277.023); color: oklch(0.962 0.018 272.314); cursor: pointer; } .ds-btn-primary:hover { background: color-mix(in oklch, oklch(0.457 0.24 277.023) 80%, transparent); } .ds-btn-primary:focus-visible { border-color: oklch(0.708 0 0); box-shadow: 0 0 0 3px oklch(0.708 0 0 / 0.3); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:disabled { pointer-events: none; opacity: 0.5; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Low-priority actions, navigation, filtering. Transparent at rest, warm ash on hover.",
+      "html": "<button class=\"ds-btn-ghost\">Filter</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 2.825rem; border: 1px solid transparent; background-clip: padding-box; font-family: 'Nunito Sans Variable', system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); outline: none; user-select: none; height: 2.25rem; gap: 0.375rem; padding: 0 0.75rem; background: transparent; color: oklch(0.145 0 0); cursor: pointer; } .ds-btn-ghost:hover { background: oklch(0.967 0.001 286.375); } .ds-btn-ghost:focus-visible { border-color: oklch(0.708 0 0); box-shadow: 0 0 0 3px oklch(0.708 0 0 / 0.3); } .ds-btn-ghost:active { transform: translateY(1px); } .ds-btn-ghost:disabled { pointer-events: none; opacity: 0.5; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Container for active work. Fully rounded, near-white background, ambient shadow for editable content. Flat for static info.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><h3 class=\"ds-card-title\">Event Details</h3></div><div class=\"ds-card-content\"><p>Manage your event settings here.</p></div></div>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 1.5rem; overflow: hidden; border-radius: 2.825rem; background: oklch(1 0 0); padding: 1.5rem; font-size: 0.875rem; color: oklch(0.145 0 0); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 0 0 1px oklch(0.145 0 0 / 0.05); } .ds-card-header { display: grid; align-items: start; gap: 0.375rem; padding-bottom: 1.5rem; } .ds-card-title { font-family: 'Noto Serif Variable', Georgia, serif; font-size: 1rem; font-weight: 500; line-height: 1.4; color: oklch(0.145 0 0); margin: 0; } .ds-card-content { font-family: 'Nunito Sans Variable', system-ui, sans-serif; line-height: 1.5; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Pill-shaped text field. Fog background at 50% opacity, ring border on focus. 36px height for touch targets.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Event name...\" />",
+      "css": ".ds-input { width: 100%; min-width: 0; height: 2.25rem; border-radius: 2.225rem; border: 1px solid transparent; background: oklch(0.922 0 0 / 0.5); padding: 0 0.75rem; font-family: 'Nunito Sans Variable', system-ui, sans-serif; font-size: 0.875rem; color: oklch(0.145 0 0); transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1), background-color 200ms cubic-bezier(0.4, 0, 0.2, 1); outline: none; } .ds-input::placeholder { color: oklch(0.556 0 0); } .ds-input:focus-visible { border-color: oklch(0.708 0 0); box-shadow: 0 0 0 3px oklch(0.708 0 0 / 0.3); background: oklch(0.922 0 0); } .ds-input:disabled { pointer-events: none; cursor: not-allowed; opacity: 0.5; }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge-default",
+      "description": "Compact status indicator. Pill-shaped, 20px height. Used for event status, priority, and category labels.",
+      "html": "<span class=\"ds-badge\">Confirmed</span>",
+      "css": ".ds-badge { display: inline-flex; height: 1.25rem; width: fit-content; flex-shrink: 0; align-items: center; justify-content: center; gap: 0.25rem; overflow: hidden; border-radius: 2.225rem; border: 1px solid transparent; padding: 0 0.5rem; font-family: 'Nunito Sans Variable', system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; white-space: nowrap; transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); background: oklch(0.457 0.24 277.023); color: oklch(0.962 0.018 272.314); } .ds-badge:focus-visible { border-color: oklch(0.708 0 0); box-shadow: 0 0 0 3px oklch(0.708 0 0 / 0.3); }"
+    },
+    {
+      "name": "Navigation Link",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Header or sidebar navigation. Plain text at rest, warm ash background on hover, vivid indigo when active.",
+      "html": "<a href=\"#/dashboard\" class=\"ds-nav-link ds-nav-link--active\">Dashboard</a>",
+      "css": ".ds-nav-link { display: inline-flex; align-items: center; height: 2.25rem; padding: 0 0.75rem; border-radius: 2.825rem; font-family: 'Nunito Sans Variable', system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: oklch(0.145 0 0); text-decoration: none; transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); outline: none; } .ds-nav-link:hover { background: oklch(0.967 0.001 286.375); } .ds-nav-link:focus-visible { border: 1px solid oklch(0.708 0 0); box-shadow: 0 0 0 3px oklch(0.708 0 0 / 0.3); } .ds-nav-link--active { color: oklch(0.457 0.24 277.023); background: transparent; } .ds-nav-link--active:hover { background: oklch(0.967 0.001 286.375); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Service Pass",
+    "overview": "This system embodies the quiet authority of a perfectly organized kitchen pass. Every surface is clean, every zone has a purpose, and nothing is frantic. The visual language is composed under pressure: surfaces stay flat and readable, accent color is deployed with surgical precision, and typography pairs the warmth of a serif heading with the legibility of a humanist sans. The overall density is moderate-to-high — this is a tool for professionals who need to scan fast and act faster. The system rejects generic SaaS templates, consumer-party aesthetics, and bloated enterprise dashboards. Every decision prioritizes scannability and trust over decoration.",
+    "keyCharacteristics": [
+      "Pill-shaped everything — no sharp corners, but nothing playful either",
+      "One accent voice: vivid indigo used sparingly, its rarity is the point",
+      "Serif headings for warmth and authority; sans body for speed and clarity",
+      "Surfaces are flat at rest; shadows appear only to elevate active work cards",
+      "Touch-friendly sizing with no compact variants below 36px height",
+      "Dark mode is functional, not cosmetic — tuned for dim ambient light"
+    ],
+    "rules": [
+      {
+        "name": "The One Voice Rule",
+        "body": "The vivid indigo accent appears on ≤10% of any given screen. Its rarity is the point — when you see it, you know it means action or importance.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Pure-Neutrals Rule",
+        "body": "Neither #000 nor #fff appear in the palette. Every extreme is tinted: white toward warm ash, black toward ink with subtle warmth.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif-Only-For-Display Rule",
+        "body": "Noto Serif Variable appears exclusively in Display and Headline roles. Never in body text, buttons, navigation, or form inputs. The contrast between serif headings and sans body is intentional — flattening it weakens hierarchy.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Shouting Rule",
+        "body": "Uppercase is forbidden outside of status badges and single-word action labels. Sentence case everywhere else.",
+        "section": "typography"
+      },
+      {
+        "name": "The Active-Work-Only Rule",
+        "body": "Shadows appear exclusively on surfaces that hold actionable or editable content. Static information, navigation, and decorative containers remain flat. If a card has no interactive elements inside, it does not get a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use vivid indigo exclusively for primary actions, active states, and status badges. Its scarcity is what makes it meaningful.",
+      "Do keep card shadows reserved for surfaces containing active or editable work. Static info stays flat.",
+      "Do use Noto Serif Variable for page titles and card headers; Nunito Sans Variable for everything else.",
+      "Do ensure touch targets are at least 44px in hurried environments (kitchens, service floors).",
+      "Do respect reduced motion — all transitions should be instant or use minimal fade when prefers-reduced-motion is active.",
+      "Do use sentence case for all labels, headings, and body copy. Uppercase is for single-word status badges only."
+    ],
+    "donts": [
+      "Don't use consumer-party aesthetics — no balloons, confetti, neon brights, or playful illustrations. This is a professional operations tool.",
+      "Don't build dashboards overloaded with metrics nobody reads. Every number on screen must earn its place.",
+      "Don't use #000 or #fff. Every extreme neutral in the palette is intentionally tinted.",
+      "Don't use gradient text, glassmorphism, or decorative blur effects. The system is flat and purposeful.",
+      "Don't use side-stripe borders (colored left/right borders >1px on cards, alerts, or list items). Use full borders, background tints, or nothing.",
+      "Don't use identical card grids with icon + heading + text repeated endlessly. Vary content presentation by function.",
+      "Don't reach for a modal as the first interaction pattern. Exhaust inline and progressive alternatives first.",
+      "Don't use em dashes. Use commas, colons, semicolons, periods, or parentheses.",
+      "Don't animate layout properties (width, height, top, left). Use transform and opacity only."
+    ]
+  }
+}
