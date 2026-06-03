@@ -1,55 +1,25 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { orpc } from "@/utils/orpc";
+import CtaBanner from "@/components/landing/cta-banner";
+import Features from "@/components/landing/features";
+import Footer from "@/components/landing/footer";
+import Hero from "@/components/landing/hero";
+import Pricing from "@/components/landing/pricing";
+import Team from "@/components/landing/team";
+import Testimonial from "@/components/landing/testimonial";
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
-
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
-
-const HomeComponent = () => {
-  const healthCheck = useQuery(orpc.healthCheck.queryOptions());
-
-  const statusText = (() => {
-    if (healthCheck.isLoading) {
-      return "Checking...";
-    }
-    if (healthCheck.data) {
-      return "Connected";
-    }
-    return "Disconnected";
-  })();
-
-  return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-      <div className="grid gap-6">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-medium">API Status</h2>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
-            />
-            <span className="text-muted-foreground text-sm">{statusText}</span>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-};
+const LandingPage = () => (
+  <div className="flex flex-col">
+    <Hero />
+    <Features />
+    <Testimonial />
+    <Pricing />
+    <Team />
+    <CtaBanner />
+    <Footer />
+  </div>
+);
 
 export const Route = createFileRoute("/")({
-  component: HomeComponent,
+  component: LandingPage,
 });
