@@ -43,7 +43,7 @@
     "@vitejs/plugin-react": "^6.0.2",
     "jsdom": "^29.1.1",
     "typescript": "catalog:",
-    "vite": "^8.0.16",
+    "vite": "catalog:",
     "web-vitals": "^5.3.0"
   }
 }
