@@ -23,13 +23,13 @@ export interface RouterAppContext {
 }
 
 const RootDocument = () => (
-  <html lang="en" className="dark">
+  <html lang="en" className="scroll-smooth">
     <head>
       <HeadContent />
     </head>
 
     <body>
-      <div className="grid h-svh grid-rows-[auto_1fr]">
+      <div className="grid min-h-svh grid-rows-[auto_1fr]">
         <Header />
         <Outlet />
       </div>
@@ -57,11 +57,11 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         charSet: "utf-8",
       },
       {
-        content: "width=device-width, initial-scale=1",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover",
         name: "viewport",
       },
       {
-        title: "My App",
+        title: "Party Planner",
       },
     ],
   }),
