@@ -7,6 +7,5 @@ export default defineConfig({
   ignorePatterns: [
     "apps/web/src/routeTree.gen.ts",
     "apps/fumadocs/src/routeTree.gen.ts",
-    "packages/ui/*",
   ],
 });
