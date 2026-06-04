@@ -6,6 +6,7 @@ pre-commit:
   jobs:
     - name: oxlint
       glob: "*.{ts,tsx,js,jsx,mjs,cjs}"
+      exclude: "packages/ui/**"
       run: pnpm oxlint --fix {staged_files}
       stage_fixed: true
     - name: oxfmt
