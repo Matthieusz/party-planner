@@ -35,15 +35,15 @@
     "@party-planner/config": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.9",
     "lefthook": "latest",
     "oxfmt": "latest",
     "oxlint": "latest",
-    "turbo": "^2.9.16",
+    "turbo": "^2.9.18",
     "typescript": "catalog:",
     "ultracite": "7.7.0",
     "vite": "catalog:",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   },
-  "packageManager": "pnpm@11.5.1"
+  "packageManager": "pnpm@11.7.0"
 }
