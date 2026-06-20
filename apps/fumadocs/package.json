@@ -11,7 +11,8 @@
     "types:check": "fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "check-types": "pnpm run types:check"
   },
   "dependencies": {
     "@orama/orama": "^3.1.18",
