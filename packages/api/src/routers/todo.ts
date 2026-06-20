@@ -3,25 +3,27 @@ import { todo } from "@party-planner/db/schema/todo";
 import { eq } from "drizzle-orm";
 import z from "zod";
 
-import { publicProcedure } from "../index";
+import { protectedProcedure } from "../index";
 
 export const todoRouter = {
-  create: publicProcedure.input(z.object({ text: z.string().min(1) })).handler(
-    async ({ input }) =>
-      await db.insert(todo).values({
-        text: input.text,
-      })
-  ),
+  create: protectedProcedure
+    .input(z.object({ text: z.string().min(1) }))
+    .handler(
+      async ({ input }) =>
+        await db.insert(todo).values({
+          text: input.text,
+        })
+    ),
 
-  delete: publicProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(
       async ({ input }) => await db.delete(todo).where(eq(todo.id, input.id))
     ),
 
-  getAll: publicProcedure.handler(async () => await db.select().from(todo)),
+  getAll: protectedProcedure.handler(async () => await db.select().from(todo)),
 
-  toggle: publicProcedure
+  toggle: protectedProcedure
     .input(z.object({ completed: z.boolean(), id: z.number() }))
     .handler(
       async ({ input }) =>

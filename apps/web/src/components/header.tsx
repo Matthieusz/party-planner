@@ -20,7 +20,6 @@ const landingLinks = [
 const appLinks = [
   { label: "Home", to: "/" },
   { label: "Dashboard", to: "/dashboard" },
-  { label: "Todos", to: "/todos" },
 ] as const;
 
 export default function Header() {

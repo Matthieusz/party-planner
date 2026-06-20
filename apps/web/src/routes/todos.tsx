@@ -9,11 +9,12 @@ import {
 import { Checkbox } from "@party-planner/ui/components/checkbox";
 import { Input } from "@party-planner/ui/components/input";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { FormEvent } from "react";
 
+import { getUser } from "@/functions/get-user";
 import { orpc } from "@/utils/orpc";
 
 const TodosRoute = () => {
@@ -143,5 +144,16 @@ const TodosRoute = () => {
 };
 
 export const Route = createFileRoute("/todos")({
+  beforeLoad: async () => {
+    const session = await getUser();
+    return { session };
+  },
   component: TodosRoute,
+  loader: ({ context }) => {
+    if (!context.session) {
+      throw redirect({
+        to: "/login",
+      });
+    }
+  },
 });
