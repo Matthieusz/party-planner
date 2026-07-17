@@ -258,6 +258,8 @@ This phase requires explicit approval before changing dependencies, TypeScript c
 
 ### Phase 5: harden the Atom frontend
 
+**Completed:** 2026-07-17. The authenticated dashboard now reads the venue-scoped Session collection through a schema-derived, credential-preserving `AtomHttpApi` query with a stable reactivity key, serialization key, and 30-second idle TTL. Its React boundary renders initial loading, stale-while-refreshing data, success, expected failure with retry, interruption, and defects intentionally. Registry tests cover repeated-write interruption, matching-key invalidation, TTL retention and cleanup, and isolated dehydration/hydration; component tests cover the user-visible asynchronous states and retry behavior.
+
 **Work**
 
 - Configure an Effect HTTP client that preserves credentials and targets the Effect API prefix. Keep request construction, status classification, and Schema decoding inside the client boundary; use raw `fetch` only if a verified browser/platform constraint requires a small adapter.

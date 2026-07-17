@@ -10,6 +10,7 @@ import {
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AlertCircle, Check } from "lucide-react";
 
+import { SessionList } from "@/components/session-list";
 import { getUser } from "@/functions/get-user";
 // Representative board data until event endpoints land.
 type Status = "done" | "in-progress" | "attention" | "upcoming";
@@ -143,6 +144,18 @@ const RouteComponent = () => {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        <Card size="sm" className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Sessions</CardTitle>
+            <CardDescription>
+              Operational Sessions for your active Venue
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SessionList />
+          </CardContent>
+        </Card>
+
         {/* Service board */}
         <Card className="lg:col-span-2">
           <CardHeader>
