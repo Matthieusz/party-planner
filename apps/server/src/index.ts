@@ -7,10 +7,14 @@ import {
   sessionRepositoryLive,
   sessionServiceLayer,
 } from "@party-planner/api";
+import {
+  LiveEventSource,
+  liveEventSourceLayer,
+} from "@party-planner/api/live-events";
 import { AuthService, authServiceLayer } from "@party-planner/auth";
 import { liveDatabaseLayer } from "@party-planner/db";
 import { ServerConfig, serverConfigLayer } from "@party-planner/env/server";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Stream } from "effect";
 import {
   HttpRouter,
   HttpServerRequest,
@@ -40,6 +44,48 @@ const rootRouteLayer = HttpRouter.add(
   "GET",
   "/",
   HttpServerResponse.text("OK")
+);
+
+const textEncoder = new TextEncoder();
+
+const liveEventsRouteLayer = HttpRouter.add(
+  "GET",
+  "/api/live-events",
+  Effect.gen(function* liveEventsRoute() {
+    const request = yield* HttpServerRequest.HttpServerRequest;
+    const auth = yield* AuthService;
+    const identity = yield* auth.resolveIdentity(
+      new Headers(request.headers as Record<string, string>)
+    );
+    const source = yield* LiveEventSource;
+    const body = source
+      .eventsForVenue(identity.venueId)
+      .pipe(
+        Stream.map((event) =>
+          textEncoder.encode(
+            `event: invalidate\ndata: ${JSON.stringify(event)}\n\n`
+          )
+        )
+      );
+    return HttpServerResponse.stream(body, {
+      headers: {
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "Content-Type": "text/event-stream",
+      },
+    });
+  }).pipe(
+    Effect.catchTags({
+      "Auth.ActiveVenueRequired": () =>
+        Effect.succeed(HttpServerResponse.empty({ status: 401 })),
+      "Auth.AdapterError": () =>
+        Effect.succeed(HttpServerResponse.empty({ status: 500 })),
+      "Auth.MembershipNotFound": () =>
+        Effect.succeed(HttpServerResponse.empty({ status: 403 })),
+      "Auth.Unauthenticated": () =>
+        Effect.succeed(HttpServerResponse.empty({ status: 401 })),
+    })
+  )
 );
 
 const requestLoggingLayer = HttpRouter.middleware(
@@ -79,14 +125,19 @@ const repositoryLayer = sessionRepositoryLive.pipe(
   Layer.provide(databaseLayer)
 );
 const sessionsLayer = sessionServiceLayer.pipe(Layer.provide(repositoryLayer));
-const applicationServicesLayer = Layer.merge(
+const liveEventsLayer = liveEventSourceLayer.pipe(
+  Layer.provide(serverConfigLayer)
+);
+const applicationServicesLayer = Layer.mergeAll(
   authenticationLayer,
-  sessionsLayer
+  sessionsLayer,
+  liveEventsLayer
 );
 
 const routesLayer = Layer.mergeAll(
   httpApiHandlersLayer,
   authRoutesLayer,
+  liveEventsRouteLayer,
   rootRouteLayer,
   HttpApiScalar.layer(PartyPlannerApi, { path: "/api-reference" })
 ).pipe(Layer.provide(applicationServicesLayer));
@@ -112,5 +163,5 @@ const serverLayer = Layer.unwrap(
 ).pipe(Layer.provide(serverConfigLayer));
 
 NodeRuntime.runMain(
-  Layer.launch(serverLayer).pipe(Effect.provide(sessionsLayer))
+  Layer.launch(serverLayer).pipe(Effect.provide(applicationServicesLayer))
 );

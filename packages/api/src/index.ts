@@ -1,5 +1,6 @@
 export { httpApiHandlersLayer, sessionsHandlersLayer } from "./http-handlers";
 export { ApiAuthentication, PartyPlannerApi, SessionsGroup } from "./http-api";
+export { LiveEvent, LiveResource } from "./live-event";
 
 export {
   currentStatus,

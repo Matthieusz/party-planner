@@ -10,6 +10,7 @@ import {
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AlertCircle, Check } from "lucide-react";
 
+import { LiveUpdates } from "@/components/live-updates";
 import { SessionList } from "@/components/session-list";
 import { getUser } from "@/functions/get-user";
 // Representative board data until event endpoints land.
@@ -141,6 +142,9 @@ const RouteComponent = () => {
             ? `${attentionRows.length} item${attentionRows.length === 1 ? "" : "s"} need${attentionRows.length === 1 ? "s" : ""} attention before doors.`
             : "Everything is on track for doors."}
         </p>
+        <div className="mt-3">
+          <LiveUpdates />
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-3">
