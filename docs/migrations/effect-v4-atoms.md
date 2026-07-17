@@ -275,6 +275,8 @@ This phase requires explicit approval before changing dependencies, TypeScript c
 
 ### Phase 6: migrate SSE invalidation
 
+**Completed:** 2026-07-17. PostgreSQL `LISTEN/NOTIFY` now feeds a scoped, broadcast Effect event source; the authenticated SSE route filters every stream to the active Venue and exposes only the operational-core resource variants. The dashboard owns and releases its credentialed `EventSource`, reports connection state, uses bounded jittered reconnects, and refetches authoritative Session data through Atom invalidation rather than merging patches. ADR-0003 now names Effect reactivity keys and `HttpApi`.
+
 **Work**
 
 - Implement the server event source as a scoped `Stream` backed by Postgres `LISTEN/NOTIFY` or the selected outbox design.
