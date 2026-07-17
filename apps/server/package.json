@@ -10,6 +10,7 @@
     "start": "node dist/index.mjs"
   },
   "dependencies": {
+    "@effect/platform-node": "4.0.0-beta.99",
     "@hono/node-server": "^2.0.5",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
@@ -20,6 +21,7 @@
     "@party-planner/env": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "effect": "4.0.0-beta.99",
     "evlog": "catalog:",
     "hono": "catalog:",
     "zod": "catalog:"

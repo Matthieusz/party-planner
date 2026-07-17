@@ -25,6 +25,18 @@ The canonical triage labels use their default strings: `needs-triage`, `needs-in
 
 This is a single-context repo with root `CONTEXT.md` and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
 
+### Effect Solutions
+
+Before implementing or reviewing Effect code:
+
+1. Run `effect-solutions list` to discover the available guidance.
+2. Read the applicable guides with `effect-solutions show <topic>...`; start with `project-setup` and `tsconfig` for tooling changes.
+3. Inspect the version pinned in this repository's installed `effect` package before relying on an API.
+4. Use the shared Effect v4 source at `~/.local/share/effect-solutions/effect` when the installed package does not answer the question.
+5. Load the global `effect` skill and read only the reference branches relevant to the task.
+
+Effect v4 and Atoms APIs are unstable. Do not guess APIs or copy examples without confirming them against the pinned package source.
+
 # Ultracite Code Standards
 
 This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Effect-TS/language-service/refs/heads/main/schema.json",
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "target": "ES2022",
@@ -15,10 +16,12 @@
     /* Linting */
     "skipLibCheck": true,
     "strict": true,
+    "noImplicitOverride": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "plugins": [{ "name": "@effect/language-service" }],
     "paths": {
       "@/*": ["./src/*"],
       "@party-planner/ui/*": ["../../packages/ui/src/*"]

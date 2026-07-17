@@ -17,6 +17,7 @@
     "@party-planner/env": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "effect": "4.0.0-beta.99",
     "zod": "catalog:"
   },
   "devDependencies": {

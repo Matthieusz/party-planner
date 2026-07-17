@@ -1,13 +1,17 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Effect-TS/language-service/refs/heads/main/schema.json",
   "extends": "@party-planner/config/tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
     "outDir": "dist",
     "paths": {
       "@/*": ["./src/*"]
     },
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
+    "plugins": [{ "name": "@effect/language-service" }],
     "strictNullChecks": true
   },
   "include": ["src/**/*"]
