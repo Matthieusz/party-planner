@@ -297,7 +297,9 @@ This phase requires explicit approval before changing dependencies, TypeScript c
 
 ### Phase 7: migrate remaining vertical slices
 
-Suggested order:
+**Completed:** 2026-07-17. A repository-wide migration inventory found no remaining production vertical slices to cut over. The only implemented server-backed business slice was the venue-scoped operational Session read path, which was migrated end to end in Phases 2–6. The other entries below describe future Party Planner product delivery, not legacy Hono/oRPC/TanStack Query implementations; building them solely to satisfy a stack migration would expand product scope and violate the migration's minimal-change principle. Static representative dashboard data is component-local presentation data and does not constitute a server-state slice. Phase 8 retains ownership of starter schema and stale configuration cleanup.
+
+Suggested implementation order for future product slices:
 
 1. read-only Venue, Room, and Client views;
 2. Booking/Event and Function/Session reads;
