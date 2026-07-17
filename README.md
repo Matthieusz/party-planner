@@ -1,6 +1,6 @@
 # party-planner
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Hono, ORPC, and more.
+Party Planner is a venue-scoped operations application built with Effect, React, and TanStack Start.
 
 ## Features
 
@@ -8,10 +8,10 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 - **TanStack Start** - SSR framework with TanStack Router
 - **TailwindCSS** - Utility-first CSS for rapid UI development
 - **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Hono** - Lightweight, performant server framework
-- **oRPC** - End-to-end type-safe APIs with OpenAPI integration
+- **Effect HttpApi** - Schema-derived HTTP contracts, handlers, and OpenAPI
+- **Effect Atoms** - Request-scoped frontend server state and live invalidation
 - **Node.js** - Runtime environment
-- **Drizzle** - TypeScript-first ORM
+- **Drizzle v1 RC** - Effect-native PostgreSQL persistence
 - **PostgreSQL** - Database engine
 - **Authentication** - Better-Auth
 - **Oxlint** - Oxlint + Oxfmt (linting & formatting)
@@ -83,19 +83,20 @@ If you want to add app-specific blocks instead of shared primitives, run the sha
 party-planner/
 ├── apps/
 │   ├── web/         # Frontend application (React + TanStack Start)
-│   └── server/      # Backend API (Hono, ORPC)
+│   └── server/      # Effect Node HTTP runtime
 ├── packages/
 │   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
+│   ├── api/         # HttpApi contracts, handlers, and application services
+│   ├── auth/        # Better Auth adapter and identity services
+│   ├── db/          # Drizzle schemas, repositories, and migrations
+│   └── env/         # Effect server config and browser-public config
 ```
 
-## Planned Effect migration
+## Effect architecture
 
-The repository is planning a migration to an Effect v4 backend, Drizzle v1 RC's native Effect integration, and Effect Atoms for frontend server state. Hono and oRPC will be replaced directly rather than retained as compatibility layers. `apps/fumadocs` is outside the migration scope.
+The backend runs on the Effect Node HTTP server. `HttpApi` contracts call venue-scoped application services and repositories, with Better Auth isolated behind an Effect adapter. The browser uses a request-scoped Effect Atom registry for server state and invalidates stable reactivity keys from venue-authorized SSE events. PostgreSQL `LISTEN/NOTIFY` supplies live operational-core changes.
 
-See [`docs/migrations/effect-v4-atoms.md`](docs/migrations/effect-v4-atoms.md) for scope, target architecture, phases, testing, rollback, and completion criteria.
+See [`docs/migrations/effect-v4-atoms.md`](docs/migrations/effect-v4-atoms.md) for the completed migration record and [`docs/adr/0003-realtime-sse-operational-core.md`](docs/adr/0003-realtime-sse-operational-core.md) for live-update semantics.
 
 ## Available Scripts
 

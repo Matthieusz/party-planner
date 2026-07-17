@@ -322,6 +322,8 @@ Do not create generic base repositories, generic CRUD services, or a universal e
 
 ### Phase 8: final cleanup
 
+**Completed:** 2026-07-17. The starter todo schema was removed with an explicit drop migration, unused direct Zod dependencies were removed while retaining Zod for Better Auth forms and browser-public environment validation, and the README now describes the completed Effect HttpApi, Effect Atoms, Drizzle, Better Auth, and SSE architecture. ADR-0003 already reflects the final Effect reactivity-key and HttpApi design from Phase 6.
+
 **Work**
 
 - Remove Zod only where it no longer supports Better Auth, a third-party integration, or transitional environment validation.
