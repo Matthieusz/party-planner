@@ -194,6 +194,8 @@ This phase requires explicit approval before changing dependencies, TypeScript c
 
 ### Phase 2: establish domain contracts and application services
 
+**Completed:** 2026-07-17. The first vertical slice is the venue-scoped operational Session read service in `packages/api/src/session`, with schema-backed contracts, repository and authorization ports, ADR-0005 status derivation, and explicit-layer service tests. Transport and persistence adapters remain Phase 3 and Phase 4 work.
+
 **First vertical slice:** replace the starter todo slice or implement the first real Party Planner read-only slice. Prefer a real, venue-scoped read such as the operational Session list if its product behavior is ready; otherwise use the starter slice only as disposable migration scaffolding.
 
 **Work**
