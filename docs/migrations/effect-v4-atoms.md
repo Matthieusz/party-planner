@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed migration plan. No implementation, dependency, compiler, or runtime changes have been made.
+Phase 0 is complete. Its baselines, pinned versions, validation findings, constraints, and go decision are recorded in [the Phase 0 report](./effect-v4-atoms-phase-0.md). No production implementation, dependency, compiler, or runtime changes have been made.
 
 ## Objective
 
@@ -152,6 +152,8 @@ Mutations invalidate the narrowest truthful keys. SSE messages carry enough venu
 ## Phased plan
 
 ### Phase 0: validate foundations and record baselines
+
+**Completed:** 2026-07-17. See [the Phase 0 report](./effect-v4-atoms-phase-0.md).
 
 **Work**
 
