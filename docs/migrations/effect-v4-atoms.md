@@ -214,6 +214,8 @@ This phase requires explicit approval before changing dependencies, TypeScript c
 
 ### Phase 3: wrap persistence, auth, config, and observability
 
+**Completed:** 2026-07-17. Server configuration now loads through a validated Effect `Config` service; application persistence uses scoped `@effect/sql-pg` and Drizzle Effect acquisition; Better Auth owns a separately scoped conventional pool and resolves active-Venue Staff identity through a named adapter effect; the Session repository is venue-scoped and decodes persisted rows; and the HTTP boundary enriches the existing evlog request event with Effect operation outcomes without emitting a duplicate completion event. The initial schema migration adds Better Auth organization membership plus the Session/assignment persistence needed by the vertical slice.
+
 **Work**
 
 - Upgrade `packages/db` to Drizzle v1 RC and replace the module-level singleton with Drizzle's native Effect acquisition and lifecycle APIs.

@@ -10,14 +10,17 @@ import type {
 } from "./domain";
 import { Forbidden } from "./forbidden";
 import type { NotFound } from "./not-found";
+import type { PersistenceError } from "./persistence-error";
 import { SessionRepository } from "./repository";
 
 /** Application operations for venue-scoped operational Session reads. */
 export interface SessionServiceInterface {
   readonly get: (
     input: GetSessionInput
-  ) => Effect.Effect<Session, NotFound | Forbidden>;
-  readonly list: (staff: StaffContext) => Effect.Effect<readonly Session[]>;
+  ) => Effect.Effect<Session, NotFound | Forbidden | PersistenceError>;
+  readonly list: (
+    staff: StaffContext
+  ) => Effect.Effect<readonly Session[], PersistenceError>;
 }
 
 /** Application service for operational Session reads. */

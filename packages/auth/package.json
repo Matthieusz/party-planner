@@ -17,11 +17,14 @@
     "@party-planner/env": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
     "effect": "4.0.0-beta.99",
+    "pg": "^8.22.0",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@party-planner/config": "workspace:*",
+    "@types/pg": "catalog:",
     "typescript": "catalog:"
   }
 }

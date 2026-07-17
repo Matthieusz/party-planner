@@ -1,18 +1,22 @@
-import { auth } from "@party-planner/auth";
-import type { Context as HonoContext } from "hono";
+import type { RequestIdentity } from "@party-planner/auth";
+import type { DatabaseShape } from "@party-planner/db";
+import { Option } from "effect";
 
 export interface CreateContextOptions {
-  context: HonoContext;
+  readonly database: DatabaseShape;
+  readonly identity: Option.Option<RequestIdentity>;
 }
 
-export const createContext = async ({ context }: CreateContextOptions) => {
-  const session = await auth.api.getSession({
-    headers: context.req.raw.headers,
-  });
-  return {
-    auth: null,
-    session,
-  };
-};
+export const createContext = ({
+  database,
+  identity,
+}: CreateContextOptions) => ({
+  auth: Option.getOrNull(identity),
+  database,
+  session: Option.match(identity, {
+    onNone: () => null,
+    onSome: ({ userId }) => ({ user: { id: userId } }),
+  }),
+});
 
-export type Context = Awaited<ReturnType<typeof createContext>>;
+export type Context = ReturnType<typeof createContext>;
