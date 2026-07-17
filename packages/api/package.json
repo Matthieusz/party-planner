@@ -13,22 +13,17 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@orpc/client": "catalog:",
-    "@orpc/openapi": "catalog:",
-    "@orpc/server": "catalog:",
-    "@orpc/zod": "catalog:",
     "@party-planner/auth": "workspace:*",
     "@party-planner/db": "workspace:*",
     "@party-planner/env": "workspace:*",
     "@types/pg": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
-    "effect": "4.0.0-beta.99",
-    "zod": "catalog:"
+    "effect": "4.0.0-beta.99"
   },
   "devDependencies": {
+    "@effect/platform-node": "4.0.0-beta.99",
     "@party-planner/config": "workspace:*",
-    "hono": "catalog:",
     "typescript": "catalog:"
   }
 }

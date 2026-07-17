@@ -235,6 +235,8 @@ This phase requires explicit approval before changing dependencies, TypeScript c
 
 ### Phase 4: replace the transport and frontend data stacks
 
+**Completed:** 2026-07-17. The venue-scoped Session read slice now uses schema-derived Effect `HttpApi` contracts and thin handlers, the Node process is hosted by the Effect HTTP server, Better Auth is mounted through the Effect router, OpenAPI and Scalar reference routes are generated from the contract, and request completion remains a single evlog wide event. The web application now owns a request-scoped Atom registry and hydration boundary plus a credential-preserving `AtomHttpApi.Service` client. Starter todo/private-data consumers were removed together with Hono, oRPC, TanStack Query, their integrations, and their runtime dependencies.
+
 **Work**
 
 - Define an Effect `HttpApi` group for the vertical slice.

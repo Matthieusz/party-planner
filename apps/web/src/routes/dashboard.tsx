@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback } from "@party-planner/ui/components/avatar";
 import { Badge } from "@party-planner/ui/components/badge";
-import { Button } from "@party-planner/ui/components/button";
 import {
   Card,
   CardContent,
@@ -8,14 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@party-planner/ui/components/card";
-import { Skeleton } from "@party-planner/ui/components/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { AlertCircle, ArrowRight, Check } from "lucide-react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { AlertCircle, Check } from "lucide-react";
 
 import { getUser } from "@/functions/get-user";
-import { orpc } from "@/utils/orpc";
-
 // Representative board data until event endpoints land.
 type Status = "done" | "in-progress" | "attention" | "upcoming";
 
@@ -127,8 +122,6 @@ const timelineDotClass: Record<Status, string> = {
 const RouteComponent = () => {
   // eslint-disable-next-line no-use-before-define
   const { session } = Route.useRouteContext();
-
-  const privateData = useQuery(orpc.privateData.queryOptions());
 
   const attentionRows = boardRows.filter((row) => row.status === "attention");
 
@@ -247,12 +240,6 @@ const RouteComponent = () => {
                   </li>
                 ))}
               </ul>
-              <Link to="/todos" className="mt-4 block">
-                <Button variant="outline" className="w-full gap-2">
-                  Open task list
-                  <ArrowRight aria-hidden />
-                </Button>
-              </Link>
             </CardContent>
           </Card>
 
@@ -280,55 +267,6 @@ const RouteComponent = () => {
                   </li>
                 ))}
               </ul>
-            </CardContent>
-          </Card>
-
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Server status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                if (privateData.isLoading) {
-                  return (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                  );
-                }
-                if (privateData.isError) {
-                  return (
-                    <div className="flex items-start gap-2.5">
-                      <span
-                        aria-hidden
-                        className="mt-1 size-2 shrink-0 rounded-full bg-destructive"
-                      />
-                      <div>
-                        <p className="text-sm font-medium">Unavailable</p>
-                        <p className="text-xs text-muted-foreground">
-                          Server did not respond. Use the toast retry to try
-                          again.
-                        </p>
-                      </div>
-                    </div>
-                  );
-                }
-                return (
-                  <div className="flex items-start gap-2.5">
-                    <span
-                      aria-hidden
-                      className="mt-1 size-2 shrink-0 rounded-full bg-primary"
-                    />
-                    <div>
-                      <p className="text-sm font-medium">Connected</p>
-                      <p className="font-mono text-[11px] text-muted-foreground">
-                        {privateData.data?.message}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })()}
             </CardContent>
           </Card>
         </div>

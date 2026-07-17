@@ -1,24 +1,19 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
-import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
 
 import "./index.css";
 import Loader from "./components/loader";
 import { routeTree } from "./routeTree.gen";
-import { orpc, queryClient } from "./utils/orpc";
 
 export const getRouter = () => {
+  const registry = AtomRegistry.make();
   const router = createTanStackRouter({
-    context: { orpc, queryClient },
+    context: { atomHydration: [], atomRegistry: registry },
     defaultNotFoundComponent: () => <div>Not Found</div>,
     defaultPendingComponent: () => <Loader />,
     defaultPreloadStaleTime: 0,
     routeTree,
     scrollRestoration: true,
-  });
-
-  setupRouterSsrQueryIntegration({
-    queryClient,
-    router,
   });
 
   return router;

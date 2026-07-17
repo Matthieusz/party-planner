@@ -19,10 +19,7 @@ const landingLinks = [
   { href: "#team", label: "Team" },
 ] as const;
 
-const appLinks = [
-  { label: "Dashboard", to: "/dashboard" },
-  { label: "Tasks", to: "/todos" },
-] as const;
+const appLinks = [{ label: "Dashboard", to: "/dashboard" }] as const;
 
 const Wordmark = () => (
   <Link
