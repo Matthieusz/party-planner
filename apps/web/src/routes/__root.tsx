@@ -11,6 +11,7 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { createMiddleware } from "@tanstack/react-start";
 import { evlogErrorHandler } from "evlog/nitro/v3";
+import { ThemeProvider } from "next-themes";
 
 import type { orpc } from "@/utils/orpc";
 
@@ -23,20 +24,35 @@ export interface RouterAppContext {
 }
 
 const RootDocument = () => (
-  <html lang="en" className="scroll-smooth">
+  <html lang="en" className="scroll-smooth" suppressHydrationWarning>
     <head>
       <HeadContent />
     </head>
 
     <body>
-      <div className="grid min-h-svh grid-rows-[auto_1fr]">
-        <Header />
-        <Outlet />
-      </div>
-      <Toaster richColors />
-      <TooltipProvider />
-      <TanStackRouterDevtools position="bottom-left" />
-      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <a
+          href="#content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:inline-flex focus:h-10 focus:items-center focus:rounded-lg focus:bg-primary focus:px-4 focus:text-sm focus:font-medium focus:text-primary-foreground"
+        >
+          Skip to content
+        </a>
+        <div className="grid min-h-svh grid-rows-[auto_1fr]">
+          <Header />
+          <main id="content">
+            <Outlet />
+          </main>
+        </div>
+        <Toaster richColors />
+        <TooltipProvider />
+        <TanStackRouterDevtools position="bottom-left" />
+        <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+      </ThemeProvider>
       <Scripts />
       {/* impeccable-live-start */}
       <script src="http://localhost:8400/live.js"></script>

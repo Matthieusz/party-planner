@@ -1,8 +1,14 @@
 import { Button } from "@party-planner/ui/components/button";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@party-planner/ui/components/field";
 import { Input } from "@party-planner/ui/components/input";
-import { Label } from "@party-planner/ui/components/label";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -39,14 +45,14 @@ export default function SignInForm({
             navigate({
               to: "/dashboard",
             });
-            toast.success("Sign in successful");
+            toast.success("Welcome back");
           },
         }
       );
     },
     validators: {
       onSubmit: z.object({
-        email: z.email("Invalid email address"),
+        email: z.email("Enter a valid email address"),
         password: z.string().min(8, "Password must be at least 8 characters"),
       }),
     },
@@ -57,62 +63,81 @@ export default function SignInForm({
   }
 
   return (
-    <div className="mx-auto w-full mt-10 max-w-md p-6">
-      <h1 className="mb-6 text-center text-3xl font-bold">Welcome Back</h1>
+    <div className="w-full max-w-sm">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Sign in to see what tonight&rsquo;s service needs from you.
+        </p>
+      </div>
 
       <form
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
         }}
-        className="space-y-4"
       >
-        <div>
+        <FieldGroup className="gap-5">
           <form.Field name="email">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="email"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
-                ))}
-              </div>
-            )}
+            {(field) => {
+              const hasErrors = field.state.meta.errors.length > 0;
+              return (
+                <Field data-invalid={hasErrors || undefined}>
+                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@venue.com"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={hasErrors || undefined}
+                    aria-describedby={
+                      hasErrors ? `${field.name}-error` : undefined
+                    }
+                  />
+                  <FieldError
+                    id={`${field.name}-error`}
+                    errors={field.state.meta.errors}
+                  />
+                </Field>
+              );
+            }}
           </form.Field>
-        </div>
 
-        <div>
           <form.Field name="password">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="password"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
-                ))}
-              </div>
-            )}
+            {(field) => {
+              const hasErrors = field.state.meta.errors.length > 0;
+              return (
+                <Field data-invalid={hasErrors || undefined}>
+                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={hasErrors || undefined}
+                    aria-describedby={
+                      hasErrors ? `${field.name}-error` : undefined
+                    }
+                  />
+                  <FieldError
+                    id={`${field.name}-error`}
+                    errors={field.state.meta.errors}
+                  />
+                </Field>
+              );
+            }}
           </form.Field>
-        </div>
+        </FieldGroup>
 
         <form.Subscribe
           selector={(state) => ({
@@ -123,24 +148,33 @@ export default function SignInForm({
           {({ canSubmit, isSubmitting }) => (
             <Button
               type="submit"
-              className="w-full"
+              className="mt-7 h-10 w-full"
               disabled={!canSubmit || isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Sign In"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin" aria-hidden />
+                  Signing in…
+                </>
+              ) : (
+                "Sign in"
+              )}
             </Button>
           )}
         </form.Subscribe>
       </form>
 
-      <div className="mt-4 text-center">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        New to Party Planner?{" "}
         <Button
+          type="button"
           variant="link"
           onClick={onSwitchToSignUp}
-          className="text-indigo-600 hover:text-indigo-800"
+          className="h-auto p-0 font-medium"
         >
-          Need an account? Sign Up
+          Create an account
         </Button>
-      </div>
+      </p>
     </div>
   );
 }

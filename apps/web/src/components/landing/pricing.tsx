@@ -1,11 +1,4 @@
 import { Button } from "@party-planner/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@party-planner/ui/components/card";
 import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 
@@ -19,45 +12,54 @@ const freeFeatures = [
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-20 lg:py-28">
+    <section id="pricing" className="border-t border-border py-20 lg:py-28">
       <div className="container mx-auto max-w-6xl px-4">
-        <div className="text-center mb-16">
-          <h2 className="font-heading text-3xl font-medium">
-            Simple, transparent pricing
+        <div className="max-w-2xl">
+          <h2 className="text-balance text-3xl font-semibold tracking-tight lg:text-4xl">
+            Start free. Scale when service demands it.
           </h2>
-          <p className="mt-4 text-muted-foreground">
-            Start free. Scale when you are ready.
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            No seat minimums, no setup fees, no training required. If you can
+            run a pass, you can run Party Planner.
           </p>
         </div>
 
-        <div className="max-w-sm mx-auto">
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle>Free</CardTitle>
-              <CardDescription>
-                For small venues getting started
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <span className="text-4xl font-medium">$0</span>
-                <span className="text-muted-foreground text-base font-normal">
+        <div className="mt-12 grid max-w-4xl overflow-hidden rounded-xl border border-border bg-card sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+          <div className="flex flex-col justify-between gap-8 border-b border-dashed border-border p-6 sm:border-b-0 sm:border-r sm:p-8">
+            <div>
+              <p className="text-sm font-semibold">Free</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                For small venues getting their first events on the books.
+              </p>
+              <p className="mt-6">
+                <span className="font-mono text-5xl font-medium tracking-tight">
+                  $0
+                </span>
+                <span className="ml-1 text-sm text-muted-foreground">
                   /month
                 </span>
-              </div>
-              <ul className="space-y-3">
-                {freeFeatures.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3 text-sm">
-                    <Check className="h-4 w-4 text-primary shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Link to="/login">
-                <Button className="w-full">Get started</Button>
-              </Link>
-            </CardContent>
-          </Card>
+              </p>
+            </div>
+            <Link to="/login">
+              <Button className="min-h-11 w-full">Get started</Button>
+            </Link>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            <p className="text-xs font-medium text-muted-foreground">
+              Everything included:
+            </p>
+            <ul className="mt-4 space-y-3.5">
+              {freeFeatures.map((feature) => (
+                <li key={feature} className="flex items-start gap-3 text-sm">
+                  <span className="mt-0.5 grid size-4.5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                    <Check className="size-3" strokeWidth={3} aria-hidden />
+                  </span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </section>

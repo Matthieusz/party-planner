@@ -5,10 +5,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@party-planner/ui/components/sheet";
+import { cn } from "@party-planner/ui/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Menu } from "lucide-react";
+import { ConciergeBell, Menu } from "lucide-react";
 import { useState } from "react";
 
+import ThemeToggle from "./theme-toggle";
 import UserMenu from "./user-menu";
 
 const landingLinks = [
@@ -18,9 +20,24 @@ const landingLinks = [
 ] as const;
 
 const appLinks = [
-  { label: "Home", to: "/" },
   { label: "Dashboard", to: "/dashboard" },
+  { label: "Tasks", to: "/todos" },
 ] as const;
+
+const Wordmark = () => (
+  <Link
+    to="/"
+    aria-label="Party Planner home"
+    className="flex items-center gap-2.5"
+  >
+    <span className="grid size-7 place-items-center rounded-lg bg-primary text-primary-foreground">
+      <ConciergeBell className="size-4" strokeWidth={2.25} aria-hidden />
+    </span>
+    <span className="text-[15px] font-semibold tracking-tight">
+      Party Planner
+    </span>
+  </Link>
+);
 
 export default function Header() {
   const { pathname } = useLocation();
@@ -28,94 +45,118 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
-      <div className="container mx-auto max-w-6xl flex items-center justify-between h-14 px-4">
-        <Link to="/" className="font-heading font-medium text-lg">
-          Party Planner
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
+      <div className="container mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+        <Wordmark />
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
           {isLanding ? (
             <>
               {landingLinks.map(({ label, href }) => (
                 <a
                   key={href}
                   href={href}
-                  className="inline-flex items-center h-9 px-3 rounded-4xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   {label}
                 </a>
               ))}
-              <Link to="/login" className="ml-2">
-                <Button>Get started</Button>
-              </Link>
+              <div className="ml-2 flex items-center gap-1">
+                <ThemeToggle />
+                <Link to="/login" className="ml-1">
+                  <Button size="sm" className="h-9">
+                    Get started
+                  </Button>
+                </Link>
+              </div>
             </>
           ) : (
             <>
-              {appLinks.map(({ label, to }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className="inline-flex items-center h-9 px-3 rounded-4xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                >
-                  {label}
-                </Link>
-              ))}
-              <div className="ml-2">
+              {appLinks.map(({ label, to }) => {
+                const isActive = pathname.startsWith(to);
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                      isActive && "text-primary hover:text-primary"
+                    )}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+              <div className="ml-2 flex items-center gap-1">
+                <ThemeToggle />
                 <UserMenu />
               </div>
             </>
           )}
         </nav>
 
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger
-            className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-4xl hover:bg-muted transition-colors"
-            aria-label="Open menu"
-          >
-            <Menu className="h-5 w-5" />
-          </SheetTrigger>
-          <SheetContent side="right" className="w-72">
-            <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-            <nav className="flex flex-col gap-2 mt-8">
-              {isLanding ? (
-                <>
-                  {landingLinks.map(({ label, href }) => (
-                    <a
-                      key={href}
-                      href={href}
-                      onClick={() => setMobileOpen(false)}
-                      className="inline-flex items-center h-10 px-3 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                    >
-                      {label}
-                    </a>
-                  ))}
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <Link to="/login" onClick={() => setMobileOpen(false)}>
-                      <Button className="w-full">Get started</Button>
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {appLinks.map(({ label, to }) => (
-                    <Link
-                      key={to}
-                      to={to}
-                      onClick={() => setMobileOpen(false)}
-                      className="inline-flex items-center h-10 px-3 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                    >
-                      {label}
-                    </Link>
-                  ))}
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <UserMenu />
-                  </div>
-                </>
-              )}
-            </nav>
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger
+              className="inline-flex size-11 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted"
+              aria-label="Open menu"
+            >
+              <Menu className="size-5" aria-hidden />
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80">
+              <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+              <div className="mt-2">
+                <Wordmark />
+              </div>
+              <nav aria-label="Mobile" className="mt-8 flex flex-col gap-1">
+                {isLanding ? (
+                  <>
+                    {landingLinks.map(({ label, href }) => (
+                      <a
+                        key={href}
+                        href={href}
+                        onClick={() => setMobileOpen(false)}
+                        className="inline-flex h-11 items-center rounded-lg px-3 text-[15px] font-medium text-foreground transition-colors hover:bg-muted"
+                      >
+                        {label}
+                      </a>
+                    ))}
+                    <div className="mt-6 flex flex-col gap-2 border-t border-border pt-6">
+                      <Link to="/login" onClick={() => setMobileOpen(false)}>
+                        <Button className="h-11 w-full">Get started</Button>
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {appLinks.map(({ label, to }) => {
+                      const isActive = pathname.startsWith(to);
+                      return (
+                        <Link
+                          key={to}
+                          to={to}
+                          onClick={() => setMobileOpen(false)}
+                          aria-current={isActive ? "page" : undefined}
+                          className={cn(
+                            "inline-flex h-11 items-center rounded-lg px-3 text-[15px] font-medium text-foreground transition-colors hover:bg-muted",
+                            isActive && "text-primary"
+                          )}
+                        >
+                          {label}
+                        </Link>
+                      );
+                    })}
+                    <div className="mt-6 border-t border-border pt-6">
+                      <UserMenu />
+                    </div>
+                  </>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );

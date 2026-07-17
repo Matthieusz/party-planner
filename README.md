@@ -91,6 +91,12 @@ party-planner/
 │   └── db/          # Database schema & queries
 ```
 
+## Planned Effect migration
+
+The repository is planning a migration to an Effect v4 backend, Drizzle v1 RC's native Effect integration, and Effect Atoms for frontend server state. Hono and oRPC will be replaced directly rather than retained as compatibility layers. `apps/fumadocs` is outside the migration scope.
+
+See [`docs/migrations/effect-v4-atoms.md`](docs/migrations/effect-v4-atoms.md) for scope, target architecture, phases, testing, rollback, and completion criteria.
+
 ## Available Scripts
 
 - `pnpm run dev`: Start all applications in development mode

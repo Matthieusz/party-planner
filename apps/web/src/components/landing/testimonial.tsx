@@ -1,24 +1,29 @@
-import { Quote } from "lucide-react";
+import { Avatar, AvatarFallback } from "@party-planner/ui/components/avatar";
 
 export default function Testimonial() {
   return (
-    <section className="py-20 lg:py-28 bg-muted">
-      <div className="container mx-auto max-w-4xl px-4 text-center">
-        <Quote className="h-8 w-8 text-primary/40 mx-auto mb-6" />
-        <blockquote className="font-heading text-2xl lg:text-3xl font-medium leading-relaxed mb-8">
-          "Party Planner turned our chaotic event coordination into a smooth,
-          repeatable process. We now run banquets with half the stress and none
-          of the missed details."
-        </blockquote>
-        <div className="flex items-center justify-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-primary/20 shrink-0" />
-          <div className="text-left">
-            <div className="font-medium">Sarah Mitchell</div>
-            <div className="text-sm text-muted-foreground">
-              Banquet Manager, The Grand Hotel
+    <section className="border-t border-border bg-muted/50 py-20 lg:py-28">
+      <div className="container mx-auto max-w-4xl px-4">
+        <figure>
+          <blockquote className="text-balance text-2xl font-medium leading-snug tracking-tight lg:text-3xl">
+            &ldquo;Party Planner turned our chaotic event coordination into a
+            calm, repeatable service. We run banquets with half the stress and
+            none of the missed details.&rdquo;
+          </blockquote>
+          <figcaption className="mt-8 flex items-center gap-4">
+            <Avatar size="lg">
+              <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+                SM
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="text-sm font-semibold">Sarah Mitchell</div>
+              <div className="font-mono text-xs text-muted-foreground">
+                Banquet Manager · The Grand Hotel
+              </div>
             </div>
-          </div>
-        </div>
+          </figcaption>
+        </figure>
       </div>
     </section>
   );
