@@ -10,7 +10,6 @@
       "@/*": ["./src/*"]
     },
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
     "plugins": [{ "name": "@effect/language-service" }],
     "strictNullChecks": true
   },

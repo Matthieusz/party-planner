@@ -56,9 +56,6 @@ importers:
       dotenv:
         specifier: 'catalog:'
         version: 17.4.2
-      zod:
-        specifier: 'catalog:'
-        version: 4.4.3
     devDependencies:
       '@effect/language-service':
         specifier: 0.87.0
@@ -382,9 +379,6 @@ importers:
       pg:
         specifier: ^8.22.0
         version: 8.22.0
-      zod:
-        specifier: 'catalog:'
-        version: 4.4.3
     devDependencies:
       '@party-planner/config':
         specifier: workspace:*
@@ -418,9 +412,6 @@ importers:
       pg:
         specifier: ^8.21.0
         version: 8.22.0
-      zod:
-        specifier: 'catalog:'
-        version: 4.4.3
     devDependencies:
       '@party-planner/config':
         specifier: workspace:*
