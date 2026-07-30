@@ -322,17 +322,17 @@ Do not create generic base repositories, generic CRUD services, or a universal e
 
 ### Phase 8: final cleanup
 
-**Completed:** 2026-07-17. The starter todo schema was removed with an explicit drop migration, unused direct Zod dependencies were removed while retaining Zod for Better Auth forms and browser-public environment validation, and the README now describes the completed Effect HttpApi, Effect Atoms, Drizzle, Better Auth, and SSE architecture. ADR-0003 already reflects the final Effect reactivity-key and HttpApi design from Phase 6.
+**Completed:** 2026-07-17. The starter todo schema was removed with an explicit drop migration, and the README now describes the completed Effect HttpApi, Effect Atoms, Drizzle, Better Auth, and SSE architecture. First-party validation now uses Effect Schema throughout, including TanStack Form through Effect's Standard Schema adapter and browser-public environment decoding. ADR-0003 already reflects the final Effect reactivity-key and HttpApi design from Phase 6.
 
 **Work**
 
-- Remove Zod only where it no longer supports Better Auth, a third-party integration, or transitional environment validation.
+- Use Effect Schema for first-party validation. Zod may remain only as a transitive implementation dependency of third-party packages.
 - Replace starter todo artifacts with real domain modules.
 - Update README architecture and ADR-0003 to describe the completed state.
 
 **Exit criteria**
 
-- Dependency and import searches show no Hono, oRPC, TanStack Query, or accidental transitional stack usage outside historical documentation.
+- Dependency and import searches show no direct Zod, Hono, oRPC, TanStack Query, or accidental transitional stack usage outside historical documentation.
 - Clean install, build, type check, tests, auth smoke tests, API smoke tests, SSR, and SSE tests pass.
 - Production telemetry shows no unexplained increase in errors, latency, connection count, or duplicate requests.
 

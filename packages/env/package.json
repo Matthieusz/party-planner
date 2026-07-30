@@ -11,15 +11,14 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@t3-oss/env-core": "^0.13.11",
     "dotenv": "catalog:",
-    "effect": "4.0.0-beta.99",
-    "zod": "catalog:"
+    "effect": "4.0.0-beta.99"
   },
   "devDependencies": {
     "@effect/vitest": "4.0.0-beta.99",
     "@party-planner/config": "workspace:*",
     "@types/node": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }

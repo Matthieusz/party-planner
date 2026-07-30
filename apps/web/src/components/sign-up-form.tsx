@@ -1,32 +1,28 @@
 import { Button } from "@party-planner/ui/components/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@party-planner/ui/components/field";
-import { Input } from "@party-planner/ui/components/input";
-import { useForm } from "@tanstack/react-form";
-import { useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { FieldGroup } from "@party-planner/ui/components/field";
+import { Schema } from "effect";
 import { toast } from "sonner";
-import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { useAuthForm } from "@/lib/auth-form";
+import { SignUpFormValues } from "@/lib/auth-form-schema";
 
 import Loader from "./loader";
 
+interface SignUpFormProps {
+  readonly onAuthenticated: () => Promise<void>;
+  readonly onSwitchToSignIn: () => void;
+}
+
+const signUpValidator = Schema.toStandardSchemaV1(SignUpFormValues);
+
 export default function SignUpForm({
+  onAuthenticated,
   onSwitchToSignIn,
-}: {
-  onSwitchToSignIn: () => void;
-}) {
-  const navigate = useNavigate({
-    from: "/",
-  });
+}: SignUpFormProps) {
   const { isPending } = authClient.useSession();
 
-  const form = useForm({
+  const form = useAuthForm({
     defaultValues: {
       email: "",
       name: "",
@@ -43,21 +39,15 @@ export default function SignUpForm({
           onError: (error) => {
             toast.error(error.error.message || error.error.statusText);
           },
-          onSuccess: () => {
-            navigate({
-              to: "/dashboard",
-            });
+          onSuccess: async () => {
             toast.success("Account created");
+            await onAuthenticated();
           },
         }
       );
     },
     validators: {
-      onSubmit: z.object({
-        email: z.email("Enter a valid email address"),
-        name: z.string().min(2, "Name must be at least 2 characters"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
-      }),
+      onSubmit: signUpValidator,
     },
   });
 
@@ -78,132 +68,61 @@ export default function SignUpForm({
 
       <form
         noValidate
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
+        onSubmit={async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          await form.handleSubmit();
         }}
       >
-        <FieldGroup className="gap-5">
-          <form.Field name="name">
-            {(field) => {
-              const hasErrors = field.state.meta.errors.length > 0;
-              return (
-                <Field data-invalid={hasErrors || undefined}>
-                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    autoComplete="name"
-                    placeholder="Alex Rivera"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={hasErrors || undefined}
-                    aria-describedby={
-                      hasErrors ? `${field.name}-error` : undefined
-                    }
-                  />
-                  <FieldError
-                    id={`${field.name}-error`}
-                    errors={field.state.meta.errors}
-                  />
-                </Field>
-              );
-            }}
-          </form.Field>
-
-          <form.Field name="email">
-            {(field) => {
-              const hasErrors = field.state.meta.errors.length > 0;
-              return (
-                <Field data-invalid={hasErrors || undefined}>
-                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="email"
-                    autoComplete="email"
-                    placeholder="you@venue.com"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={hasErrors || undefined}
-                    aria-describedby={
-                      hasErrors ? `${field.name}-error` : undefined
-                    }
-                  />
-                  <FieldError
-                    id={`${field.name}-error`}
-                    errors={field.state.meta.errors}
-                  />
-                </Field>
-              );
-            }}
-          </form.Field>
-
-          <form.Field name="password">
-            {(field) => {
-              const hasErrors = field.state.meta.errors.length > 0;
-              return (
-                <Field data-invalid={hasErrors || undefined}>
-                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="8+ characters"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={hasErrors || undefined}
-                    aria-describedby={
-                      hasErrors ? `${field.name}-error` : undefined
-                    }
-                  />
-                  <FieldError
-                    id={`${field.name}-error`}
-                    errors={field.state.meta.errors}
-                  />
-                </Field>
-              );
-            }}
-          </form.Field>
-        </FieldGroup>
-
-        <form.Subscribe
-          selector={(state) => ({
-            canSubmit: state.canSubmit,
-            isSubmitting: state.isSubmitting,
-          })}
-        >
-          {({ canSubmit, isSubmitting }) => (
-            <Button
-              type="submit"
-              className="mt-7 h-10 w-full"
-              disabled={!canSubmit || isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="animate-spin" aria-hidden />
-                  Creating account…
-                </>
-              ) : (
-                "Create account"
+        <form.AppForm>
+          <FieldGroup className="gap-5">
+            <form.AppField name="name">
+              {(field) => (
+                <field.AuthTextField
+                  autoComplete="name"
+                  label="Name"
+                  placeholder="Alex Rivera"
+                />
               )}
-            </Button>
-          )}
-        </form.Subscribe>
+            </form.AppField>
+
+            <form.AppField name="email">
+              {(field) => (
+                <field.AuthTextField
+                  autoComplete="email"
+                  label="Email"
+                  placeholder="you@venue.com"
+                  type="email"
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="password">
+              {(field) => (
+                <field.AuthTextField
+                  autoComplete="new-password"
+                  label="Password"
+                  placeholder="8+ characters"
+                  type="password"
+                />
+              )}
+            </form.AppField>
+          </FieldGroup>
+
+          <form.AuthSubmitButton
+            idleLabel="Create account"
+            pendingLabel="Creating account…"
+          />
+        </form.AppForm>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Button
+          className="h-auto p-0 font-medium"
+          onClick={onSwitchToSignIn}
           type="button"
           variant="link"
-          onClick={onSwitchToSignIn}
-          className="h-auto p-0 font-medium"
         >
           Sign in
         </Button>

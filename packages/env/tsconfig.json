@@ -5,7 +5,8 @@
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "plugins": [{ "name": "@effect/language-service" }],
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["node", "vite/client"]
   },
   "include": ["src/**/*.ts"]
 }

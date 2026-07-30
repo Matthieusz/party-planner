@@ -25,7 +25,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "effect:patch": "effect-language-service patch",
+    "effect:patch": "effect-tsgo patch",
     "prepare": "pnpm effect:patch"
   },
   "dependencies": {
@@ -33,20 +33,20 @@
     "dotenv": "catalog:"
   },
   "devDependencies": {
-    "@effect/language-service": "0.87.0",
+    "@effect/tsgo": "0.24.3",
     "@effect/vitest": "4.0.0-beta.99",
     "@party-planner/config": "workspace:*",
-    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/jest-dom": "^7.0.0",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-v8": "^4.1.10",
     "lefthook": "latest",
     "oxfmt": "latest",
     "oxlint": "latest",
-    "turbo": "^2.9.18",
+    "turbo": "^2.10.7",
     "typescript": "catalog:",
     "ultracite": "7.7.0",
     "vite": "catalog:",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   },
-  "packageManager": "pnpm@11.7.0"
+  "packageManager": "pnpm@11.18.0"
 }

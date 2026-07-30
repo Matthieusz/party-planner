@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { ConciergeBell } from "lucide-react";
 import { useState } from "react";
 
 import SignInForm from "@/components/sign-in-form";
 import SignUpForm from "@/components/sign-up-form";
+import { getUser } from "@/functions/get-user";
 
 const serviceStrip = [
   { label: "Setup complete", state: "done", time: "17:30" },
@@ -70,17 +71,26 @@ const BrandPanel = () => (
   </div>
 );
 
-const RouteComponent = () => {
+const LoginRoute = () => {
+  // eslint-disable-next-line no-use-before-define -- Route owns the typed navigation hook.
+  const navigate = Route.useNavigate();
   const [showSignIn, setShowSignIn] = useState(false);
+  const onAuthenticated = () => navigate({ to: "/dashboard" });
 
   return (
     <div className="grid h-full lg:grid-cols-2">
       <BrandPanel />
       <div className="flex items-center justify-center px-4 py-12 sm:px-8">
         {showSignIn ? (
-          <SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
+          <SignInForm
+            onAuthenticated={onAuthenticated}
+            onSwitchToSignUp={() => setShowSignIn(false)}
+          />
         ) : (
-          <SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
+          <SignUpForm
+            onAuthenticated={onAuthenticated}
+            onSwitchToSignIn={() => setShowSignIn(true)}
+          />
         )}
       </div>
     </div>
@@ -88,5 +98,11 @@ const RouteComponent = () => {
 };
 
 export const Route = createFileRoute("/login")({
-  component: RouteComponent,
+  beforeLoad: async () => {
+    const session = await getUser();
+    if (session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
+  component: LoginRoute,
 });

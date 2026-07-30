@@ -1,13 +1,18 @@
-import { createEnv } from "@t3-oss/env-core";
-import { z } from "zod";
+import { Schema } from "effect";
 
-export const env = createEnv({
-  client: {
-    VITE_SERVER_URL: z.url(),
-  },
-  clientPrefix: "VITE_",
-  emptyStringAsUndefined: true,
-  runtimeEnv: (
-    import.meta as unknown as { env: Record<string, string | undefined> }
-  ).env,
+const HTTP_URL_PATTERN = /^https?:\/\//u;
+
+const HttpUrl = Schema.String.pipe(
+  Schema.check(
+    Schema.isPattern(HTTP_URL_PATTERN, {
+      message: "Expected an HTTP or HTTPS URL",
+    })
+  )
+);
+
+const WebEnvironment = Schema.Struct({
+  VITE_SERVER_URL: HttpUrl,
 });
+
+/** Browser-public environment decoded once through Effect Schema at startup. */
+export const env = Schema.decodeUnknownSync(WebEnvironment)(import.meta.env);

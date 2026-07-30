@@ -134,7 +134,7 @@ const RouteComponent = () => {
           Tonight · Grand Ballroom
         </p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Welcome back, {session?.user.name}
+          Welcome back, {session.user.name}
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
           180 guests, service at 7:00 PM.{" "}
@@ -295,14 +295,10 @@ const RouteComponent = () => {
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
     const session = await getUser();
+    if (!session) {
+      throw redirect({ to: "/login" });
+    }
     return { session };
   },
   component: RouteComponent,
-  loader: ({ context }) => {
-    if (!context.session) {
-      throw redirect({
-        to: "/login",
-      });
-    }
-  },
 });
