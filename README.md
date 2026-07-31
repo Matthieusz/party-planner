@@ -1,112 +1,179 @@
-# party-planner
+<div align="center">
 
-Party Planner is a venue-scoped operations application built with Effect, React, and TanStack Start.
+# Party Planner
 
-## Features
+**Calm, venue-scoped operations for the people keeping events on track.**
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Start** - SSR framework with TanStack Router
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Effect HttpApi** - Schema-derived HTTP contracts, handlers, and OpenAPI
-- **Effect Atoms** - Request-scoped frontend server state and live invalidation
-- **Node.js** - Runtime environment
-- **Drizzle v1 RC** - Effect-native PostgreSQL persistence
-- **PostgreSQL** - Database engine
-- **Authentication** - Better-Auth
-- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
-- **Turborepo** - Optimized monorepo build system
+Party Planner brings bookings, sessions, menus, rooms, headcounts, and service updates into one shared workspace for hotels and event venues. Less spreadsheet archaeology, more knowing what needs attention.
 
-## Getting Started
+<p>
+  <a href="https://github.com/Matthieusz/party-planner">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/Matthieusz/party-planner.svg?variant=outline&amp;mode=dark">
+      <img alt="GitHub stars" src="https://shieldcn.dev/github/stars/Matthieusz/party-planner.svg?variant=outline&amp;mode=light">
+    </picture>
+  </a>
+  <a href="https://github.com/Matthieusz/party-planner/blob/main/LICENSE">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/license/Matthieusz/party-planner.svg?variant=outline&amp;mode=dark">
+      <img alt="MIT license" src="https://shieldcn.dev/github/license/Matthieusz/party-planner.svg?variant=outline&amp;mode=light">
+    </picture>
+  </a>
+  <a href="https://github.com/Matthieusz/party-planner/commits/main/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/commits/Matthieusz/party-planner.svg?variant=outline&amp;mode=dark">
+      <img alt="GitHub commits" src="https://shieldcn.dev/github/commits/Matthieusz/party-planner.svg?variant=outline&amp;mode=light">
+    </picture>
+  </a>
+</p>
 
-First, install the dependencies:
+</div>
+
+## The short version
+
+A wedding, conference, or banquet can involve a lot of moving parts. Party Planner gives venue teams one operational view of the work:
+
+- **Coordinators** manage Events, Sessions, menus, headcounts, rooms, and assignments.
+- **Kitchen staff** get the prep information they need and fire courses during service.
+- **Service staff** see live Sessions and keep floor timing up to date.
+- **Admins** manage the Venue, Staff, Clients, and access.
+
+The MVP is intentionally focused: online-only, venue-scoped, and built around an in-app **needs attention** view instead of a wall of decorative metrics.
+
+## What is here now
+
+- Venue-scoped multi-tenancy with four roles: Admin, Coordinator, Kitchen, and Service
+- Event-to-Session planning, with status transitions and assignment-based access
+- Menus, courses, menu items, and reusable Menu Templates
+- Rooms and expected guest headcounts
+- Better Auth for identity and venue membership
+- Live updates for the operational core through venue-authorized Server-Sent Events
+- In-app notifications through the needs-attention view
+
+Named guests, seating charts, offline support, email notifications, and push notifications are deliberately later milestones. The kitchen has enough to do without us pretending the MVP needs everything on day one.
+
+## Built with
+
+| Area                | Tools                                                           |
+| ------------------- | --------------------------------------------------------------- |
+| Frontend            | React, TanStack Start, TanStack Router, Tailwind CSS, shadcn/ui |
+| State and contracts | Effect v4, Effect Atoms, Effect HttpApi                         |
+| Backend             | Effect Node HTTP server, Node.js                                |
+| Identity            | Better Auth                                                     |
+| Persistence         | PostgreSQL, Drizzle v1 RC                                       |
+| Workspace           | pnpm, Turborepo, TypeScript                                     |
+| Quality             | Oxlint, Oxfmt, Ultracite, Vitest                                |
+
+## How the pieces fit
+
+```text
+React + TanStack Start
+├── Effect Atoms
+│   └── request-scoped server state and live invalidation
+└── Effect HttpApi
+    ├── venue-scoped application services
+    ├── Better Auth adapter
+    └── Drizzle → PostgreSQL
+
+PostgreSQL LISTEN/NOTIFY
+└── venue-authorized SSE → stable frontend invalidation keys
+```
+
+The important boundary is the Venue. Application services, authorization, realtime events, and persisted business data all respect it. A Coordinator's access to a Session comes from assignment, while Kitchen and Service operate venue-wide within their role scope.
+
+## Getting started
+
+### Prerequisites
+
+- Node.js
+- pnpm 11
+- PostgreSQL, either locally or through Docker
+
+### Run it locally
 
 ```bash
+git clone git@github.com:Matthieusz/party-planner.git
+cd party-planner
 pnpm install
 ```
 
-## Database Setup
-
-This project uses PostgreSQL with Drizzle ORM.
-
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/server/.env` file with your PostgreSQL connection details.
-
-3. Apply the schema to your database:
+If you are using the local Docker database, start it with:
 
 ```bash
-pnpm run db:push
+pnpm db:start
 ```
 
-Then, run the development server:
+If you already have PostgreSQL, skip that command and use its connection details. Set the server configuration in `apps/server/.env`, then apply the schema and start the workspace:
 
 ```bash
-pnpm run dev
+pnpm db:push
+pnpm dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
-The API is running at [http://localhost:3000](http://localhost:3000).
+Once everything is running:
 
-## UI Customization
+- Web app: [localhost:3001](http://localhost:3001)
+- API: [localhost:3000](http://localhost:3000)
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
+## Useful commands
 
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
+| Command            | What it does                      |
+| ------------------ | --------------------------------- |
+| `pnpm dev`         | Start the web app and server      |
+| `pnpm dev:web`     | Start only the web app            |
+| `pnpm dev:server`  | Start only the server             |
+| `pnpm check`       | Run linting and formatting checks |
+| `pnpm check-types` | Check types across the workspace  |
+| `pnpm test`        | Run the test suite                |
+| `pnpm db:studio`   | Open Drizzle Studio               |
+| `pnpm db:generate` | Generate a database migration     |
+| `pnpm db:migrate`  | Run database migrations           |
 
-### Add more shared components
+## Project map
 
-Run this from the project root to add more primitives to the shared UI package:
+```text
+party-planner/
+├── apps/
+│   ├── web/         # React + TanStack Start frontend
+│   └── server/      # Effect Node HTTP runtime
+├── packages/
+│   ├── ui/          # Shared shadcn/ui components and styles
+│   ├── api/         # HttpApi contracts, handlers, and services
+│   ├── auth/        # Better Auth adapter and identity services
+│   ├── db/          # Drizzle schemas, repositories, and migrations
+│   └── env/         # Server and browser-public configuration
+├── docs/            # ADRs and migration notes
+├── CONTEXT.md       # Domain language and business rules
+└── DESIGN.md        # Product design system
+```
+
+## A few technical notes
+
+- [Effect v4 and Atoms migration](docs/migrations/effect-v4-atoms.md)
+- [Realtime SSE decision record](docs/adr/0003-realtime-sse-operational-core.md)
+- [Domain context and terminology](CONTEXT.md)
+- [Product goals and design constraints](PRODUCT.md)
+
+## UI customization
+
+Shared shadcn/ui primitives live in `packages/ui`:
+
+- Design tokens and global styles: `packages/ui/src/styles/globals.css`
+- Shared primitives: `packages/ui/src/components/`
+- Shared component configuration: `packages/ui/components.json`
+
+Add a shared primitive from the project root with:
 
 ```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
+pnpm dlx shadcn@latest add accordion dialog popover sheet table -c packages/ui
 ```
 
-Import shared components like this:
+Use it in an app with:
 
 ```tsx
 import { Button } from "@party-planner/ui/components/button";
 ```
 
-### Add app-specific blocks
+## License
 
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
-
-## Git Hooks and Formatting
-
-- Format and lint fix: `pnpm run check`
-
-## Project Structure
-
-```
-party-planner/
-├── apps/
-│   ├── web/         # Frontend application (React + TanStack Start)
-│   └── server/      # Effect Node HTTP runtime
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # HttpApi contracts, handlers, and application services
-│   ├── auth/        # Better Auth adapter and identity services
-│   ├── db/          # Drizzle schemas, repositories, and migrations
-│   └── env/         # Effect server config and browser-public config
-```
-
-## Effect architecture
-
-The backend runs on the Effect Node HTTP server. `HttpApi` contracts call venue-scoped application services and repositories, with Better Auth isolated behind an Effect adapter. The browser uses a request-scoped Effect Atom registry for server state and invalidates stable reactivity keys from venue-authorized SSE events. PostgreSQL `LISTEN/NOTIFY` supplies live operational-core changes.
-
-See [`docs/migrations/effect-v4-atoms.md`](docs/migrations/effect-v4-atoms.md) for the completed migration record and [`docs/adr/0003-realtime-sse-operational-core.md`](docs/adr/0003-realtime-sse-operational-core.md) for live-update semantics.
-
-## Available Scripts
-
-- `pnpm run dev`: Start all applications in development mode
-- `pnpm run build`: Build all applications
-- `pnpm run dev:web`: Start only the web application
-- `pnpm run dev:server`: Start only the server
-- `pnpm run check-types`: Check TypeScript types across all apps
-- `pnpm run db:push`: Push schema changes to database
-- `pnpm run db:generate`: Generate database client/types
-- `pnpm run db:migrate`: Run database migrations
-- `pnpm run db:studio`: Open database studio UI
-- `pnpm run check`: Run Oxlint and Oxfmt
+[MIT](LICENSE). Built in public, with a healthy respect for the difference between a useful dashboard and a very expensive spreadsheet.
