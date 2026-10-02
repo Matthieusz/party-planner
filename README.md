@@ -91,19 +91,19 @@ Cloudflare Worker
          └── GET /api/me     (Authentication → CurrentTeamMember)
 ```
 
-| Path | Responsibility |
-| --- | --- |
-| `alchemy.run.ts` | Infrastructure composition root, local deployment state |
-| `backend/worker.ts` | Worker entry, API/auth dispatch, compiled static assets |
-| `backend/auth.ts` | Narrow auth service backed by the first-party integration |
-| `backend/database.ts` | D1 resource; auth schema managed by the integration |
-| `backend/api.ts` | Schema-checked Effect HTTP contract |
-| `backend/middleware.ts` | Session resolution and protected identity injection |
-| `backend/current-team-member.ts` | Safe identity projection, no session secrets |
-| `frontend/src/main.ts` | Foldkit authentication state machine and Live Operations shell |
-| `frontend/src/commands.ts` | Runtime-owned auth requests and response parsing |
-| `test/unit/` | UI transitions and HTTP authentication boundary tests |
-| `test/integ/` | Real local D1/Worker authentication lifecycle |
+| Path                             | Responsibility                                                 |
+| -------------------------------- | -------------------------------------------------------------- |
+| `alchemy.run.ts`                 | Infrastructure composition root, local deployment state        |
+| `backend/worker.ts`              | Worker entry, API/auth dispatch, compiled static assets        |
+| `backend/auth.ts`                | Narrow auth service backed by the first-party integration      |
+| `backend/database.ts`            | D1 resource; auth schema managed by the integration            |
+| `backend/api.ts`                 | Schema-checked Effect HTTP contract                            |
+| `backend/middleware.ts`          | Session resolution and protected identity injection            |
+| `backend/current-team-member.ts` | Safe identity projection, no session secrets                   |
+| `frontend/src/main.ts`           | Foldkit authentication state machine and Live Operations shell |
+| `frontend/src/commands.ts`       | Runtime-owned auth requests and response parsing               |
+| `test/unit/`                     | UI transitions and HTTP authentication boundary tests          |
+| `test/integ/`                    | Real local D1/Worker authentication lifecycle                  |
 
 One Worker serves both the frontend and API in deployment. No cross-site cookies,
 credentialed CORS allowlist, or second publicly deployed frontend Worker is needed.

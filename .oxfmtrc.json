@@ -6,6 +6,7 @@
   "singleQuote": false,
   "ignorePatterns": [
     "node_modules/**",
+    "repos/**",
     "frontend/dist/**",
     ".alchemy/**",
     ".codegraph/**",

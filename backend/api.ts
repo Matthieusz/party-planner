@@ -7,11 +7,13 @@ import { Authentication } from "./middleware.ts";
 
 /** Public liveness contract without account or infrastructure details. */
 export class PublicApi extends HttpApiGroup.make("public").add(
-  HttpApiEndpoint.get("health", "/api/health", { success: Schema.Struct({ ok: Schema.Literal(true) }) }),
+  HttpApiEndpoint.get("health", "/api/health", {
+    success: Schema.Struct({ ok: Schema.Literal(true) }),
+  }),
 ) {}
 /** Endpoints requiring an authenticated individual identity. */
-export class IdentityApi extends HttpApiGroup.make("identity").add(
-  HttpApiEndpoint.get("me", "/api/me", { success: TeamMember }),
-).middleware(Authentication) {}
+export class IdentityApi extends HttpApiGroup.make("identity")
+  .add(HttpApiEndpoint.get("me", "/api/me", { success: TeamMember }))
+  .middleware(Authentication) {}
 /** Shared, schema-checked HTTP contract. */
 export class Api extends HttpApi.make("venue-operations").add(PublicApi, IdentityApi) {}

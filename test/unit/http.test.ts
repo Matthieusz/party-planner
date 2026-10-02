@@ -6,9 +6,9 @@ import { HttpLive } from "../../backend/http.ts";
 
 test("public liveness works but a missing session cannot access the protected identity", async () => {
   const auth = Layer.mock(Auth, { getSession: () => Effect.succeed(null) });
-  const { handler, dispose } = HttpRouter.toWebHandler(
-    HttpLive.pipe(Layer.provide(auth)), { disableLogger: true },
-  );
+  const { handler, dispose } = HttpRouter.toWebHandler(HttpLive.pipe(Layer.provide(auth)), {
+    disableLogger: true,
+  });
   try {
     const health = await handler(new Request("http://localhost/api/health"));
     expect(health.status).toBe(200);

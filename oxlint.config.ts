@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: ["typescript", "oxc"],
   ignorePatterns: [
     "node_modules/**",
+    "repos/**",
     "frontend/dist/**",
     ".alchemy/**",
     ".codegraph/**",

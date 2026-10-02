@@ -11,4 +11,6 @@ export const TeamMember = Schema.Struct({
 export interface TeamMember extends Schema.Schema.Type<typeof TeamMember> {}
 
 /** Identity supplied exclusively by authentication middleware. */
-export class CurrentTeamMember extends Context.Service<CurrentTeamMember, TeamMember>()("app/CurrentTeamMember") {}
+export class CurrentTeamMember extends Context.Service<CurrentTeamMember, TeamMember>()(
+  "app/CurrentTeamMember",
+) {}
