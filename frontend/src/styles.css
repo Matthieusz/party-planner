@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "./foldcn.css";
+
+@layer base {
+  :root {
+    font-family: var(--font-sans);
+    font-synthesis: none;
+    --font-heading: var(--font-sans);
+  }
+}
