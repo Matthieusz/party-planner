@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Effect-TS/language-service/refs/heads/main/schema.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "@effect/language-service" }],
+    "incremental": true,
+    "moduleDetection": "force",
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noImplicitOverride": true,
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "paths": {
+      "@/*": ["./frontend/src/*"]
+    },
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "types": ["bun"],
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "alchemy.run.ts",
+    "oxlint.config.ts",
+    "backend/**/*.ts",
+    "frontend/**/*.ts",
+    "test/**/*.ts"
+  ]
+}

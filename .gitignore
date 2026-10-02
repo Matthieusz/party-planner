@@ -1,0 +1,8 @@
+node_modules/
+frontend/dist/
+.alchemy/
+.codegraph/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
