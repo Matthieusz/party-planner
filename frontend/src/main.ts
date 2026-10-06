@@ -1,4 +1,6 @@
 import { Match, Redacted, Schema } from "effect";
+import { AuthClient } from "./auth-client.ts";
+import type { Context } from "effect";
 import type { Runtime, Update } from "foldkit";
 import type { Document, HtmlBuilder } from "foldkit/html";
 import { TeamMember } from "../../backend/current-team-member.ts";
@@ -43,9 +45,14 @@ export const init: Runtime.ApplicationInit<Model, Message> = () => ({
 });
 
 /** Pure transitions; network work is returned as runtime-owned Commands. */
-export const update = (model: Model, message: Message): Update.Return<Model, Message> =>
+export const update = (
+  model: Model,
+  message: Message,
+): Update.Return<Model, Message, Context.Service.Identifier<typeof AuthClient>> =>
   Match.value(message).pipe(
-    Match.withReturnType<Update.Return<Model, Message>>(),
+    Match.withReturnType<
+      Update.Return<Model, Message, Context.Service.Identifier<typeof AuthClient>>
+    >(),
     Match.tagsExhaustive({
       ChangedName: ({ value }) =>
         model.state._tag === "SignedOut"

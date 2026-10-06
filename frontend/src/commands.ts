@@ -1,6 +1,7 @@
 import { Effect, Redacted, Schema } from "effect";
 import { Command } from "foldkit";
 import { TeamMember } from "../../backend/current-team-member.ts";
+import { AuthClient } from "./auth-client.ts";
 import { Message, Password } from "./message.ts";
 
 class RequestFailed extends Schema.TaggedError<RequestFailed>()("RequestFailed", {
@@ -8,14 +9,12 @@ class RequestFailed extends Schema.TaggedError<RequestFailed>()("RequestFailed",
   cause: Schema.optionalKey(Schema.Defect()),
 }) {}
 
-const request = Effect.fn("AuthClient.request")(function* (path: string, body?: string) {
+const request = Effect.fn("AuthClient.request")(function* (path: string) {
   return yield* Effect.tryPromise({
     try: (signal) =>
       fetch(path, {
-        method: body ? "POST" : "GET",
+        method: "GET",
         credentials: "same-origin",
-        headers: body !== undefined ? { "content-type": "application/json" } : {},
-        body: body ?? null,
         signal,
       }),
     catch: (cause) =>
@@ -52,7 +51,7 @@ export const CheckIdentity = Command.define("CheckIdentity", {
   execute: loadIdentity().pipe(Effect.catchTag("RequestFailed", failureMessage)),
 });
 
-/** Authenticates with Better Auth, then verifies access through the protected API. */
+/** Authenticates with Yielded Auth, then verifies access through the protected API. */
 export const Authenticate = Command.define("Authenticate", {
   args: {
     mode: Schema.Literals(["sign-in", "sign-up"]),
@@ -63,21 +62,44 @@ export const Authenticate = Command.define("Authenticate", {
   messages: [Message.LoadedIdentity, Message.FailedRequest],
   execute: ({ mode, name, email, password }) =>
     Effect.gen(function* () {
-      const response = yield* request(
-        `/api/auth/${mode}/email`,
-        JSON.stringify(
-          mode === "sign-up"
-            ? { name, email, password: Redacted.value(password) }
-            : { email, password: Redacted.value(password) },
-        ),
-      );
-      if (!response.ok)
-        return yield* new RequestFailed({
-          message:
-            mode === "sign-in"
-              ? "Sign in failed. Check your email and password."
-              : "Sign up failed. Use a valid email and a password of at least 8 characters.",
-        });
+      const client = yield* AuthClient;
+      if (mode === "sign-up") {
+        yield* client.auth
+          .register({
+            requestId: crypto.randomUUID(),
+            email,
+            newPassword: Redacted.value(password),
+            registration: { name },
+          })
+          .pipe(
+            Effect.mapError(
+              (error) =>
+                new RequestFailed({
+                  message:
+                    error._tag === "PasswordUnavailable" ||
+                    error._tag === "PasswordCheckUnavailable" ||
+                    error._tag === "OperationHttpError"
+                      ? "Sign up is temporarily unavailable. Please try again."
+                      : "Sign up failed. Use a valid email and a password of at least 8 characters that is not commonly used.",
+                }),
+            ),
+          );
+      }
+      const signedIn = yield* client.auth
+        .signIn({ email, password: Redacted.value(password) })
+        .pipe(
+          Effect.mapError(
+            (error) =>
+              new RequestFailed({
+                message:
+                  error._tag === "PasswordUnavailable" || error._tag === "OperationHttpError"
+                    ? "Sign in is temporarily unavailable. Please try again."
+                    : "Sign in failed. Check your email and password.",
+              }),
+          ),
+        );
+      if (signedIn._tag !== "Authenticated")
+        return yield* new RequestFailed({ message: "Additional authentication is required." });
       return yield* loadIdentity();
     }).pipe(Effect.catchTag("RequestFailed", failureMessage)),
 });
@@ -86,11 +108,15 @@ export const Authenticate = Command.define("Authenticate", {
 export const SignOut = Command.define("SignOut", {
   messages: [Message.LoadedIdentity, Message.FailedRequest],
   execute: Effect.gen(function* () {
-    const response = yield* request("/api/auth/sign-out", "{}");
-    if (!response.ok)
-      return yield* new RequestFailed({
-        message: "Sign out failed. Your session may still be active.",
-      });
+    const client = yield* AuthClient;
+    yield* client.auth.signOut().pipe(
+      Effect.mapError(
+        () =>
+          new RequestFailed({
+            message: "Sign out failed. Your session may still be active.",
+          }),
+      ),
+    );
     return Message.LoadedIdentity({ member: null });
   }).pipe(Effect.catchTag("RequestFailed", failureMessage)),
 });

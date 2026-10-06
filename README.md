@@ -1,7 +1,7 @@
 # Venue Operations
 
 Foundation for the application described in [`CONTEXT.md`](./CONTEXT.md):
-**Foldkit + Effect HTTP API + Alchemy + Cloudflare D1 + first-party Better Auth integration**.
+**Foldkit + Effect HTTP API + Yielded Auth + Drizzle ORM + Alchemy + Cloudflare D1**.
 
 The repository directory/package is still `party-planner`; the application uses
 Venue Operations terminology. `CONTEXT.md` is unchanged.
@@ -13,14 +13,14 @@ bun install --frozen-lockfile
 bun dev
 ```
 
-Open **http://localhost:1339**. Alchemy runs the Worker and D1 locally, applies
-Better Auth's schema migrations, and generates a signing secret. No Neon,
-Postgres, manually configured auth secret, or cloud provisioning is needed for
-this local stack. Local database/state files live under the ignored `.alchemy/`.
+Open **http://localhost:1339**. Alchemy runs the Worker and D1 locally and applies
+the committed D1 migrations. Auth uses opaque server-side sessions, so local
+development needs no manually configured signing secret or cloud provisioning.
+Local database/state files live under the ignored `.alchemy/`.
 
 Create an identity, sign in, and see the Live Operations shell with Management,
 Kitchen, and Service. The UI confirms the identity through protected `/api/me`,
-not through a localStorage profile. Session cookies are owned by Better Auth;
+not through a localStorage profile. Session cookies are owned by Yielded;
 the client stores no tokens. Passwords are redacted in the model/messages.
 Foldkit DevTools and MCP message dispatch are enabled for local development;
 their bridge is development-only.
@@ -40,10 +40,10 @@ separate terminals. The Worker at 1339 serves the compiled frontend; restart
 `bun dev` (or run `bun run build:web`) after frontend edits if you use that URL
 instead of Vite.
 
-Better Auth uses `http://localhost:1339` as its canonical `baseURL` and trusts
-both local origins (`http://localhost:1339` and `http://localhost:1337`). These
-are configured in `backend/auth.ts`; replace them with the production origin
-before deploying. Frontend API requests remain relative and same-origin.
+The Worker uses a fixed policy for each local origin: `http://localhost:1339`
+and, through Vite, `http://localhost:1337`. The browser client uses the current
+origin. Production requires `AUTH_ORIGIN` to be the public HTTPS origin; the
+local Vite policy is enabled only with the default local configuration.
 
 ## UI components (Foldcn)
 
@@ -84,26 +84,30 @@ Browser: Foldkit
    ▼
 Cloudflare Worker
    ├── Foldkit static assets
-   ├── /api/auth/*  → @alchemy.run/better-auth
-   │                     └── CloudflareD1(AuthDb)
    └── Effect HttpApi
-         ├── GET /api/health  (public)
+         ├── /api/auth/*     (Yielded HTTP handlers → YieldedAuthDb)
+         ├── GET /api/health (public)
          └── GET /api/me     (Authentication → CurrentTeamMember)
 ```
 
-| Path                             | Responsibility                                                 |
-| -------------------------------- | -------------------------------------------------------------- |
-| `alchemy.run.ts`                 | Infrastructure composition root, local deployment state        |
-| `backend/worker.ts`              | Worker entry, API/auth dispatch, compiled static assets        |
-| `backend/auth.ts`                | Narrow auth service backed by the first-party integration      |
-| `backend/database.ts`            | D1 resource; auth schema managed by the integration            |
-| `backend/api.ts`                 | Schema-checked Effect HTTP contract                            |
-| `backend/middleware.ts`          | Session resolution and protected identity injection            |
-| `backend/current-team-member.ts` | Safe identity projection, no session secrets                   |
-| `frontend/src/main.ts`           | Foldkit authentication state machine and Live Operations shell |
-| `frontend/src/commands.ts`       | Runtime-owned auth requests and response parsing               |
-| `test/unit/`                     | UI transitions and HTTP authentication boundary tests          |
-| `test/integ/`                    | Real local D1/Worker authentication lifecycle                  |
+| Path                                                  | Responsibility                                                    |
+| ----------------------------------------------------- | ----------------------------------------------------------------- |
+| `alchemy.run.ts`                                      | Infrastructure composition root and production origin requirement |
+| `backend/worker.ts`                                   | Worker entry, request-scoped D1, static assets                    |
+| `backend/auth-contract.ts`                            | Shared Yielded actions and registration schemas                   |
+| `backend/auth.ts`                                     | Password strategy and session policy                              |
+| `backend/auth-live.ts`                                | Cryptography, screening, and persistence composition              |
+| `backend/auth-storage.ts`                             | Explicit Yielded D1 adapter mappings and identity claims          |
+| `backend/database.ts`                                 | Shared request-scoped Drizzle service and stable D1 resource      |
+| `backend/schema.ts`, `backend/auth-tables.ts`         | Application and Yielded Drizzle tables                            |
+| `drizzle.config.ts`, `backend/migrations/`            | Drizzle Kit generation and Alchemy-applied D1 migrations          |
+| `backend/password-screening.ts`, `backend/passwords/` | Offline password blocklist and provenance                         |
+| `backend/password-limits.ts`                          | Atomic D1 token buckets for password attempts                     |
+| `backend/api.ts`, `backend/http.ts`                   | Effect HTTP contract and Yielded HTTP integration                 |
+| `backend/middleware.ts`                               | Session resolution and protected identity injection               |
+| `frontend/src/auth-client.ts`                         | Runtime-owned Yielded browser client                              |
+| `frontend/src/main.ts`, `frontend/src/commands.ts`    | Foldkit authentication state and commands                         |
+| `test/unit/`, `test/integ/`                           | UI, auth boundaries, screening, and real local D1 lifecycle       |
 
 One Worker serves both the frontend and API in deployment. No cross-site cookies,
 credentialed CORS allowlist, or second publicly deployed frontend Worker is needed.
@@ -111,9 +115,68 @@ Alchemy's `Cloudflare.Worker` static assets serve the Foldkit Vite build; this i
 not an assets-only `Website.Foldkit` resource, because the same Worker also owns
 the Effect API.
 
+## Database and migrations
+
+Application repositories use `Database` from `backend/database.ts`. The Worker
+creates one Effect-native Drizzle instance per request; Yielded's D1 adapter,
+identity claims, and password limiter use that same instance/client. D1 remains
+the only database. The resource ID stays `YieldedAuthDb` to preserve existing
+accounts and Alchemy state, even though it now serves application data too.
+
+For example, inside a backend repository:
+
+```ts
+import { eq } from "drizzle-orm";
+import { Effect } from "effect";
+import { Database } from "./database.ts";
+import { subjects } from "./schema.ts";
+
+const activeIdentities = Effect.gen(function* () {
+  const database = yield* Database;
+  return yield* database
+    .select({ id: subjects.id, name: subjects.name, email: subjects.email })
+    .from(subjects)
+    .where(eq(subjects.active, 1));
+});
+```
+
+Keep database queries in backend adapters/repositories, decode persisted data
+into domain schemas there, and translate typed query failures at that boundary.
+Do not acquire the binding or construct a second Drizzle client in a handler.
+D1 does not support interactive SQL transactions: Yielded and the token bucket
+limiter use native atomic D1 batches through the shared client instead.
+
+Export application tables from `backend/schema.ts`; it also exposes the owned
+Yielded tables and the password rate-limit table. After changing a table:
+
+```sh
+bun run db:generate --name=describe_change
+bun run format
+bun run check
+bun test test/unit
+```
+
+Review and commit the generated SQL and snapshot together. Generation is local,
+needs no Cloudflare credentials, and never applies or pushes schema changes.
+Alchemy applies committed migrations during `bun dev` or an explicitly requested
+deploy; do not use Drizzle Kit or Wrangler to maintain a second migration ledger.
+Restart the local stack after adding a migration if it has not picked it up.
+
+Drizzle Kit writes to `backend/migrations/drizzle/`. This nested layout lets
+Alchemy recursively read both the original flat migrations and generated SQL,
+without changing the original applied migration IDs. The initial Drizzle
+snapshot records the existing schema; its SQL is a no-op because
+`0001_yielded_auth.sql` and `0002_password_limits.sql` already create the tables.
+Keep those original files and the baseline. Do not move the generated folders
+to the migration root or point Alchemy only at the nested directory.
+
+Unlike Yielded's managed Bun SQLite example, the D1 adapter uses explicit
+application-owned mappings in `backend/auth-storage.ts`.
+
 ## Verification
 
 ```sh
+bun run check         # lint, formatting, strict typecheck
 bun run build         # strict typecheck + frontend production build
 bun run test          # unit tests; no infrastructure needed
 ```
@@ -126,13 +189,35 @@ AUTH_TEST_URL=http://localhost:1339 bun run test:integ
 
 The integration test never deploys infrastructure and accepts only loopback
 hostnames. It creates a disposable identity in the local database and verifies
-sign-up, cookies, session lookup, protected access, sign-out, sign-in, and rejection
-of an untrusted origin. Without `AUTH_TEST_URL` it is skipped. Run only against a
+registration, cookies, session lookup, protected access, sign-out and revocation,
+duplicate registration safety, offline password rejection, persistent attempt
+limits, CSRF protection, and rejection of an untrusted origin. Without
+`AUTH_TEST_URL` it is skipped. Run only against a
 local database where disposable test identities are acceptable.
 
 ## Scope and security
 
-This is an authenticated foundation, **not a finished venue-access system**:
+Auth uses Argon2id password hashing, a shared derivation concurrency limit, and
+D1-backed opaque sessions with an eight-hour absolute lifetime and a 30-minute
+idle timeout. Sign-out revokes the server session. Password attempt limits are
+atomic D1 token buckets shared across requests and isolates. The Worker allows
+30 seconds of CPU time for the portable password KDF; cloud performance has not
+been measured by the local tests. One derivation runs per isolate; excess work
+returns `PasswordUnavailable` immediately rather than waiting across Worker
+request contexts. Clients can retry.
+
+New passwords must have at least eight code points and pass the offline
+blocklist plus account/service-name screening. The bundled corpus contains
+12,527 entries from two pinned SecLists lists; provenance, licensing, refresh
+instructions, and its finite coverage are documented in
+[`backend/passwords/UPSTREAM.md`](./backend/passwords/UPSTREAM.md). Registration
+sends no password or password hash to a screening service.
+
+The migration creates a fresh `YieldedAuthDb` resource. Existing Better Auth
+development users, passwords, and cookies are discarded; there is no account
+import or compatibility layer.
+
+Application access remains limited to an authenticated foundation:
 
 - Identity verification is not Organization membership or Venue authorization.
 - The Operational Areas are an empty shell, not seeded operational data.
@@ -151,28 +236,38 @@ This is an authenticated foundation, **not a finished venue-access system**:
 credentials described in `.env.example`, and can incur charges:
 
 ```sh
-bun run deploy
+AUTH_ORIGIN=https://your-public-origin.example bun run deploy
 ```
 
-This targets the `production` stage and creates the Worker and D1, applies the
-auth schema, and binds the generated auth signing secret. Do not run it until
-the target account and the application access policies are ready.
+This targets the `production` stage, creates the Worker and D1, and applies the
+committed auth schema. The configured origin must match the public Worker/custom
+domain origin. Do not run it until the target account and the application access
+policies are ready.
 
 Alchemy state is local (`Alchemy.localState()`). Keep `.alchemy/` private and
-preserve its deployment state: it tracks resources and the generated signing
-secret. Do not discard it after deployment or assume a fresh checkout can manage
+preserve its deployment state: it tracks the managed resources. Do not discard it
+after deployment or assume a fresh checkout can manage
 existing resources. Remote/shared state is not configured by this setup.
 
 ## Dependency baseline and references
 
 Versions are pinned in `package.json` and resolved in `bun.lock`: Effect 4.0.0,
-Foldkit 0.165.0, Alchemy and `@alchemy.run/better-auth` 2.0.0-beta.80. Alchemy is
-still a beta dependency; upgrade it and its integration together and rerun the
-real authentication test.
+Foldkit 0.165.0, Alchemy 2.0.0-beta.80, Yielded Auth/crypto/persistence
+0.1.0-beta.23, and Drizzle ORM/Kit 1.0.0-rc.4. Yielded and Alchemy are beta dependencies;
+upgrade deliberately and rerun the real authentication test. Bun applies the
+committed official Yielded Effect v4 Drizzle patch through `patchedDependencies`;
+keep `patches/drizzle-orm@1.0.0-rc.4.patch` alongside the lockfile.
+
+The pinned Yielded password-management facade requires reset services alongside
+registration. This application exposes registration through its supported custom
+strategy interface and the native D1 registration authority, while the built-in
+password strategy handles sign-in. Recovery remains outside the current scope.
 
 Implementation references:
 
-- [Alchemy's official D1 + Better Auth + Effect HttpApi example](https://github.com/alchemy-run/alchemy-effect/tree/ea384f00bf5207c41459189843d590b28d64484f/examples/cloudflare-better-auth)
+- [Yielded Auth](https://yielded.dev/auth/)
+- [Yielded HTTP and browser client](https://yielded.dev/auth/guide/http-and-client/)
+- [Yielded persistence adapters](https://yielded.dev/auth/reference/adapters/)
 - [Alchemy's Foldkit example](https://github.com/alchemy-run/alchemy-effect/tree/ea384f00bf5207c41459189843d590b28d64484f/examples/cloudflare-foldkit)
 - [NolanGC's full-stack starter](https://github.com/NolanGC/foldkit-alchemy-starter) — architectural reference only; its custom Postgres auth wrapper is not used here.
 
