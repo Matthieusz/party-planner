@@ -1,3 +1,4 @@
+import { Sessions } from "@yielded/auth";
 import { expect, test } from "bun:test";
 import { Effect, Layer } from "effect";
 import * as HttpRouter from "effect/http/HttpRouter";
@@ -17,6 +18,22 @@ test("public liveness works but a missing session cannot access the protected id
     expect(me.status).toBe(401);
     const missing = await handler(new Request("http://localhost/api/auth-not-a-route"));
     expect(missing.status).toBe(404);
+  } finally {
+    await dispose();
+  }
+});
+
+test("session storage outages return 503 without treating them as missing credentials", async () => {
+  const auth = Layer.mock(Auth, {
+    getSession: () => Effect.fail(Sessions.SessionUnavailable.make({})),
+  });
+  const { handler, dispose } = HttpRouter.toWebHandler(HttpLive.pipe(Layer.provide(auth)), {
+    disableLogger: true,
+  });
+  try {
+    const me = await handler(new Request("http://localhost/api/me"));
+    expect(me.status).toBe(503);
+    expect(await me.json()).toEqual({ _tag: "AuthenticationUnavailable" });
   } finally {
     await dispose();
   }

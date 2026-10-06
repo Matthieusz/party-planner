@@ -1,20 +1,23 @@
-import { BetterAuth } from "@alchemy.run/better-auth";
-import * as Context from "effect/Context";
-import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
+import { Auth as YieldedAuth, Password, Sessions } from "@yielded/auth";
+import { AuthContract } from "./auth-contract.ts";
+import { registrationStrategy } from "./registration.ts";
 
-const makeAuth = BetterAuth({
-  baseURL: "http://localhost:1339",
-  basePath: "/api/auth",
-  trustedOrigins: ["http://localhost:1339", "http://localhost:1337"],
-  emailAndPassword: { enabled: true },
+/** Password authentication with opaque, revocable sessions stored in D1. */
+export const Auth = YieldedAuth.make(AuthContract, {
+  sessions: Sessions.stateful({ maxAge: "8 hours", idleTimeout: "30 minutes" }),
+  strategies: { password: Password.make(), registration: registrationStrategy },
+  defaultStrategy: "password",
 });
 
-/** Request-scoped auth capabilities backed by the first-party integration. */
-export class Auth extends Context.Service<
-  Auth,
-  Pick<Effect.Success<typeof makeAuth>, "fetch" | "getSession">
->()("app/Auth") {
-  /** Acquires auth using the explicitly provided database layer. */
-  static readonly layer = Layer.effect(Auth, makeAuth);
-}
+/** Single password factor; policy changes must bump subject security revisions. */
+export const authenticationRequirement = Sessions.AuthenticationRequirement.make({
+  alternatives: [
+    {
+      factors: ["knowledge"],
+      userVerified: false,
+      phishingResistant: false,
+      minimumCredentials: 1,
+    },
+  ],
+  maximumAgeMillis: 300_000,
+});

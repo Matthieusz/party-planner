@@ -7,6 +7,7 @@
     "dev:web": "vite --config frontend/vite.config.ts",
     "dev:all": "bun run --parallel dev dev:web",
     "build:web": "vite build --config frontend/vite.config.ts",
+    "db:generate": "drizzle-kit generate",
     "typecheck": "tsc --noEmit",
     "prepare": "effect-language-service patch",
     "lint": "oxlint --config oxlint.config.ts --disable-nested-config",
@@ -21,15 +22,18 @@
     "deploy": "bun run build && alchemy deploy --stage production"
   },
   "dependencies": {
-    "@alchemy.run/better-auth": "2.0.0-beta.80",
     "@effect/platform-browser": "4.0.0",
+    "@effect/sql-d1": "4.0.0",
     "@foldkit/ui": "0.165.0",
-    "alchemy": "2.0.0-beta.80",
-    "better-auth": "1.7.7",
+    "@yielded/auth": "0.1.0-beta.23",
+    "@yielded/auth-persistence": "0.1.0-beta.23",
+    "@yielded/auth-persistence-drizzle": "0.1.0-beta.23",
+    "@yielded/crypto": "0.1.0-beta.23",
+    "alchemy": "2.0.0-beta.81",
     "cn": "0.4.0",
+    "drizzle-orm": "1.0.0-rc.4",
     "effect": "4.0.0",
     "foldkit": "0.165.0",
-    "kysely": "0.29.6",
     "lucide": "1.50.0"
   },
   "devDependencies": {
@@ -42,6 +46,7 @@
     "@oxlint/plugins": "1.86.0",
     "@tailwindcss/vite": "4.3.3",
     "@types/bun": "latest",
+    "drizzle-kit": "1.0.0-rc.4",
     "oxfmt": "0.71.0",
     "oxlint": "1.86.0",
     "oxlint-tsgolint": "7.0.2003",
@@ -50,5 +55,8 @@
     "typescript": "^5.9.3",
     "vite": "8.3.2"
   },
-  "packageManager": "bun@1.4.2"
+  "packageManager": "bun@1.4.2",
+  "patchedDependencies": {
+    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch"
+  }
 }

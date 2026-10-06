@@ -1,4 +1,6 @@
-import { RuntimeContext } from "alchemy";
+import { Auth as YieldedAuth } from "@yielded/auth";
+import * as Context from "effect/Context";
+import * as HttpRouter from "effect/http/HttpRouter";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
@@ -22,24 +24,35 @@ export class AuthenticationUnavailable extends Schema.TaggedError<Authentication
 /** Resolves and parses the session identity before any protected handler runs. */
 export class Authentication extends HttpApiMiddleware.Service<
   Authentication,
-  { provides: CurrentTeamMember }
+  {
+    provides: CurrentTeamMember;
+    requires: HttpRouter.Request.From<"Requires", YieldedAuth.AuthRequest>;
+  }
 >()("app/Authentication", { error: [Unauthorized, AuthenticationUnavailable] }) {
-  /** Uses the Worker's owned request scope to resolve Better Auth sessions. */
+  /** Uses Yielded's HTTP request scope to resolve session claims. */
   static readonly layer = Layer.effect(
     Authentication,
     Effect.gen(function* () {
       const auth = yield* Auth;
       return (httpEffect) =>
         Effect.gen(function* () {
-          const session = yield* auth
-            .getSession()
-            .pipe(Effect.mapError(() => new AuthenticationUnavailable()));
+          const session = yield* auth.getSession().pipe(
+            Effect.provideServiceEffect(
+              YieldedAuth.AuthRequest,
+              Effect.map(
+                Effect.context<HttpRouter.Request.From<"Requires", YieldedAuth.AuthRequest>>(),
+                // SAFETY: Yielded HTTP middleware supplies AuthRequest before this request marker runs.
+                (context) => Context.getUnsafe(context, YieldedAuth.AuthRequest),
+              ),
+            ),
+            Effect.mapError(() => new AuthenticationUnavailable()),
+          );
           if (session === null) return yield* new Unauthorized();
-          const identity = yield* Schema.decodeUnknownEffect(TeamMember)(session.user).pipe(
+          const identity = yield* Schema.decodeUnknownEffect(TeamMember)(session.claims).pipe(
             Effect.mapError(() => new AuthenticationUnavailable()),
           );
           return yield* Effect.provideService(httpEffect, CurrentTeamMember, identity);
-        }).pipe(Effect.provide(RuntimeContext.phantom));
+        });
     }),
   );
 }

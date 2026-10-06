@@ -4,6 +4,7 @@
     "plugins": [{ "name": "@effect/language-service" }],
     "incremental": true,
     "moduleDetection": "force",
+    "resolveJsonModule": true,
     "exactOptionalPropertyTypes": true,
     "noUnusedLocals": true,
     "noImplicitOverride": true,
@@ -25,6 +26,7 @@
   },
   "include": [
     "alchemy.run.ts",
+    "drizzle.config.ts",
     "oxlint.config.ts",
     "backend/**/*.ts",
     "frontend/**/*.ts",
