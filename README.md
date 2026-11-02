@@ -1,10 +1,11 @@
 # Venue Operations
 
-Foundation for the application described in [`CONTEXT.md`](./CONTEXT.md):
+Foundation for the application described in [the product plan](./PRODUCT.md),
+with terminology defined in [the glossary](./GLOSSARY.md):
 **Foldkit + Effect HTTP API + Yielded Auth + Drizzle ORM + Alchemy + Cloudflare D1**.
 
 The repository directory/package is still `party-planner`; the application uses
-Venue Operations terminology. `CONTEXT.md` is unchanged.
+Venue Operations terminology.
 
 ## Run locally
 
