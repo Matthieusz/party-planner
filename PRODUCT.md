@@ -92,4 +92,4 @@ Plans refresh when opened, when staff return to the tab, and on explicit refresh
 
 ## Reshaping the scope
 
-This plan captures the product direction confirmed during the interview. Keep the existing technical foundation.
+This plan captures the product direction confirmed during the interview. Keep the existing technical foundation. The implementation sequence, contracts, and agreed test seams are in [the implementation plan](./docs/implementation-plan.md).
