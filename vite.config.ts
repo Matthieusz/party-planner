@@ -5,6 +5,76 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  run: {
+    tasks: {
+      "dev:server": {
+        command: "vp run build:web && alchemy dev",
+        cache: false,
+      },
+      "dev:web": {
+        command: "vp dev",
+        cache: false,
+      },
+      dev: {
+        // Vite Task requires a command even for a group of long-running dependencies.
+        command: "true",
+        dependsOn: ["dev:server", "dev:web"],
+        cache: false,
+      },
+      "build:web": {
+        command: "vp build",
+        cache: false,
+      },
+      "db:generate": {
+        command: "drizzle-kit generate",
+        cache: false,
+      },
+      typecheck: {
+        command: "effect-tsgo tsrs --noEmit",
+        cache: false,
+      },
+      lint: {
+        command: "vp lint --disable-nested-config",
+        cache: false,
+      },
+      "lint:fix": {
+        command: "vp lint --disable-nested-config --fix",
+        cache: false,
+      },
+      format: {
+        command: "vp fmt --write .",
+        cache: false,
+      },
+      "format:check": {
+        command: "vp fmt --check .",
+        cache: false,
+      },
+      check: {
+        command: "vp check && vp run typecheck",
+        cache: false,
+      },
+      fix: {
+        command: "vp check --fix && vp run typecheck",
+        cache: false,
+      },
+      build: {
+        command: "vp run typecheck && vp run build:web",
+        cache: false,
+      },
+      test: {
+        command: "bun test ./test/unit",
+        cache: false,
+      },
+      "test:integ": {
+        command: "bun test ./test/integ",
+        cache: false,
+      },
+      deploy: {
+        command: "vp run build && alchemy deploy --stage production",
+        cache: false,
+      },
+    },
+  },
   root: fileURLToPath(new URL("./frontend", import.meta.url)),
   fmt: {
     useTabs: false,
