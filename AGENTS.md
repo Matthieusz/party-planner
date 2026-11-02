@@ -2,14 +2,18 @@
 
 Use Bun (the version is recorded in `package.json`).
 
+Use CodeGraph to explore symbols and their relationships when navigating the
+codebase: `codegraph query`, `codegraph context`, `codegraph callers`, and
+`codegraph impact` are useful starting points. Run `codegraph status` and
+`codegraph sync` when the index needs updating; verify findings against source.
+
 - `bun run lint`: Oxlint with Foldkit's recommended preset and vendored anti-slop rules.
 - `bun run lint:fix`: apply available lint fixes; review the changes.
 - `bun run format`: format owned files with Oxfmt.
 - `bun run format:check`: check formatting without modifying files.
-- `bun run typecheck`: TypeScript plus patched Effect diagnostics.
+- `bun run typecheck`: tsrs with Effect diagnostics via `@effect/tsgo`.
 - `bun run check`: lint, formatting, and typechecking.
 - `bun test test/unit`: local unit tests.
-- `bun run prepare`: reapply the Effect language-service patch after installation if needed.
 
 Lint policy lives in `oxlint.config.ts`; formatting policy lives in
 `.oxfmtrc.json`. Anti-slop is owned, vendored code under
