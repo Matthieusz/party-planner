@@ -1,4 +1,6 @@
-import * as Cloudflare from "alchemy/Cloudflare";
+// @effect-diagnostics unstableApiUsage:off
+// The Worker adapter intentionally uses Effect HTTP routing.
+import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

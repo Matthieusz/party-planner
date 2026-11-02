@@ -1,5 +1,8 @@
+// @effect-diagnostics unstableApiUsage:off
+// Persisted rate-limit keys intentionally use Effect SHA-256 digests.
 import { Password } from "@yielded/auth";
-import { Crypto, Effect, Layer, Schema } from "effect";
+import { Effect, Layer, Schema } from "effect";
+import { Digest } from "effect/crypto";
 import { Database } from "./database.ts";
 
 /** D1 token buckets survive Worker request scopes; each atomic statement consumes without refunds. */
@@ -9,15 +12,15 @@ export const PasswordLimitsLive = Layer.effect(
     // Native D1 batches are atomic; interactive Drizzle transactions are not supported by D1.
     const database = yield* Database;
     const sql = database.$client;
-    const crypto = yield* Crypto.Crypto;
+    const crypto = yield* Digest.Digest;
     return Password.PasswordAttemptLimiter.of({
       check: Effect.fn("PasswordLimits.check")(function* (input) {
-        const budget = yield* Schema.decodeUnknownEffect(
-          Password.PasswordAttemptPolicy.fields.identifier,
-        )(input.budget).pipe(Effect.mapError(() => Password.PasswordUnavailable.make({})));
+        const budget = yield* Schema.decodeEffect(Password.PasswordAttemptPolicy.fields.identifier)(
+          input.budget,
+        ).pipe(Effect.mapError(() => Password.PasswordUnavailable.make({})));
         const digest = yield* crypto
           .digest(
-            "SHA-256",
+            Digest.sha256,
             new TextEncoder().encode(
               JSON.stringify([input.moduleId, input.action, input.scope, input.key]),
             ),

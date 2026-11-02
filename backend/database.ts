@@ -1,11 +1,13 @@
+// @effect-diagnostics unstableApiUsage:off
+// The Cloudflare persistence adapter intentionally uses Effect D1.
 import type { D1Database } from "@cloudflare/workers-types";
 import * as D1Client from "@effect/sql-d1/D1Client";
-import * as Cloudflare from "alchemy/Cloudflare";
+import * as D1 from "@alchemy.run/cloudflare/D1";
 import * as Drizzle from "drizzle-orm/effect-d1";
 import { Context, Effect, Layer } from "effect";
 
 /** Shared application/auth D1 resource; its stable ID preserves existing data and migration history. */
-export const AuthDb = Cloudflare.D1.Database("YieldedAuthDb", {
+export const AuthDb = D1.Database("YieldedAuthDb", {
   migrations: "./backend/migrations",
 });
 

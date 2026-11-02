@@ -1,3 +1,5 @@
+// @effect-diagnostics unstableApiUsage:off
+// Migration tests intentionally use Effect Bun filesystem and path adapters.
 import { Database as Sqlite } from "bun:sqlite";
 import { expect, test } from "bun:test";
 import * as BunFileSystem from "@effect/platform-bun/BunFileSystem";
@@ -9,7 +11,7 @@ import {
   MigrationError,
   readMigrationRecords,
   type SqlExecutor,
-} from "alchemy/SQL/Migrations/index";
+} from "@alchemy.run/sql/Migrations";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Effect, Schema } from "effect";
 import { rateLimits, subjects } from "../../backend/schema.ts";

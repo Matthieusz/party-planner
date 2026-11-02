@@ -1,5 +1,5 @@
 import * as Alchemy from "alchemy";
-import * as Cloudflare from "alchemy/Cloudflare";
+import * as Cloudflare from "@alchemy.run/cloudflare";
 import { Stage } from "alchemy/Stage";
 import * as Config from "effect/Config";
 import * as Schema from "effect/Schema";
@@ -16,7 +16,7 @@ export default Alchemy.Stack(
       yield* Config.schema(
         Schema.String.check(
           Schema.makeFilter((value) => {
-            const parsed = Schema.decodeUnknownOption(Schema.URLFromString)(value);
+            const parsed = Schema.decodeOption(Schema.URLFromString)(value);
             return (
               parsed._tag === "Some" &&
               parsed.value.protocol === "https:" &&

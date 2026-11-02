@@ -6,13 +6,13 @@ import {
   requiredSessionConstraints,
 } from "@yielded/auth-persistence/Adapter";
 import type {
-  D1PasswordPersistenceMapping,
+  PasswordPersistenceMapping,
   PasswordRegistrationMapping,
-  D1StatefulSessionMapping,
+  StatefulSessionMapping,
 } from "@yielded/auth-persistence-drizzle";
 import { and, eq, sql } from "drizzle-orm";
 import { DateTime, Effect, Redacted, Schema } from "effect";
-import { authenticationRequirement } from "./auth.ts";
+import { Auth, authenticationRequirement } from "./auth.ts";
 import type { Registration } from "./auth-contract.ts";
 import type { Database } from "./database.ts";
 import * as Tables from "./auth-tables.ts";
@@ -23,7 +23,7 @@ const mappingError = (cause: Schema.SchemaError) =>
 const subjectId = {
   toNative: (id: AuthSchema.SubjectId) => Effect.succeed(id),
   toSubject: (id: string) =>
-    Schema.decodeUnknownEffect(AuthSchema.SubjectId)(id).pipe(Effect.mapError(mappingError)),
+    Schema.decodeEffect(AuthSchema.SubjectId)(id).pipe(Effect.mapError(mappingError)),
   equals: (left: string, right: string) => left === right,
 };
 const revision = Effect.sync(() => Sessions.SecurityRevision.make(crypto.randomUUID()));
@@ -43,13 +43,11 @@ const conflict = (columns: string) => (cause: unknown) => {
   );
 };
 
-type PasswordMapping = D1PasswordPersistenceMapping<
+type PasswordMapping = PasswordPersistenceMapping<
   typeof Tables.subjects,
   typeof Tables.identifiers,
   typeof Tables.passwords,
   typeof Tables.credentials,
-  typeof Tables.attempts,
-  typeof Tables.commands,
   string
 >;
 const subject: PasswordMapping["subject"] = {
@@ -156,74 +154,28 @@ export const passwordMapping: PasswordMapping = {
   authorityCredential,
   subjectId,
   constraints: requiredPasswordConstraints,
-  attempt: {
-    table: Tables.attempts,
-    moduleId: "moduleId",
-    action: "action",
-    attemptId: "attemptId",
-    identifierNamespace: "identifierNamespace",
-    identifierValue: "identifierValue",
-    subjectId: "subjectId",
-    credentialId: "credentialId",
-    securityRevision: "securityRevision",
-    credentialRevision: "credentialRevision",
-    verifierVersion: "verifierVersion",
-    identifierBindingRevision: "identifierBindingRevision",
-    admittedAt: "admittedAt",
-    deadline: "deadline",
-    retentionUntil: "retentionUntil",
-    state: "state",
-    encodeInsert: (
-      { identifier, admittedAtMillis, deadlineMillis, retentionUntilMillis, ...record },
-      input,
-    ) => ({
-      ...record,
-      subjectId: input.nativeSubjectId ?? null,
-      identifierNamespace: identifier.namespace,
-      identifierValue: identifier.value,
-      admittedAt: admittedAtMillis,
-      deadline: deadlineMillis,
-      retentionUntil: retentionUntilMillis,
-      state: input.state,
-    }),
-  },
-  command: {
-    table: Tables.commands,
-    moduleId: "moduleId",
-    commandId: "commandId",
-    action: "action",
-    bindingDigest: "bindingDigest",
-    decision: "decision",
-    retentionUntil: "retentionUntil",
-    encodeInsert: ({ retentionUntilMillis, ...input }) => ({
-      ...input,
-      retentionUntil: retentionUntilMillis,
-    }),
-  },
   encodeInstant: (value) => value,
   decodeInstant: (value) => decodeMillis(value).pipe(Effect.mapError(mappingError)),
-  allocateAttemptId: Effect.sync(() => Password.PasswordAttemptId.make(crypto.randomUUID())),
   allocateCredentialId: Effect.sync(() => crypto.randomUUID()),
   allocateRevision: revision,
-  commandRetentionMillis: 86_400_000,
   sessionInvalidation: "same-authority-immediate",
-  isCommandConflict: conflict("auth_commands.moduleId, auth_commands.commandId"),
-  d1: {
-    engineNow,
+  clock: {
+    encodeInstant: (value) => value,
+    decodeInstant: Schema.decodeUnknownSync(Schema.Int),
     engineNowMillis: engineNow,
-    engineInstantMinus: (millis) => sql`${engineNow} - ${millis}`,
-    engineInstantPlus: (millis) => sql`${engineNow} + ${millis}`,
+    toMillis: (value: import("drizzle-orm").SQL) => value,
+    fromMillis: (value: import("drizzle-orm").SQL) => value,
   },
+  d1: { primary: true },
 };
 
-/** Registration commits subject, identifier, verifier, factor revision, and receipt atomically. */
+/** Registration commits subject, identifier, verifier, and factor revision atomically. */
 export const registrationMapping: PasswordRegistrationMapping<
   Registration,
   typeof Tables.subjects,
   typeof Tables.identifiers,
   typeof Tables.passwords,
   typeof Tables.credentials,
-  typeof Tables.registrations,
   string
 > = {
   subject,
@@ -250,23 +202,6 @@ export const registrationMapping: PasswordRegistrationMapping<
       };
     },
   },
-  registration: {
-    table: Tables.registrations,
-    moduleId: "moduleId",
-    requestId: "requestId",
-    state: "state",
-    subjectId: "subjectId",
-    recoveryReference: "recoveryReference",
-    encodeInsert: (input, state) => ({
-      moduleId: input.moduleId,
-      requestId: input.requestId,
-      state: state.state,
-      subjectId: state.nativeSubjectId ?? null,
-      recoveryReference: state.recoveryReference ?? null,
-    }),
-    decodeReplay: () => Effect.succeed({ _tag: "Suppressed" }),
-  },
-  isRequestConflict: conflict("auth_registrations.moduleId, auth_registrations.requestId"),
   isIdentifierConflict: conflict("auth_identifiers.namespace, auth_identifiers.value"),
   isCredentialConflict: conflict("auth_passwords.moduleId, auth_passwords.subjectId"),
 };
@@ -274,7 +209,6 @@ export const registrationMapping: PasswordRegistrationMapping<
 const storedSession = Schema.Struct({
   ...Sessions.SessionMetadata.fields,
   digest: AuthSchema.TokenDigest,
-  version: Sessions.SecurityRevision,
   credentialVersion: Sessions.SessionCredentialVersion,
   assurance: Schema.fromJsonString(Sessions.SessionMetadata.fields.assurance),
   claims: Schema.fromJsonString(TeamMember),
@@ -283,26 +217,27 @@ const storedSession = Schema.Struct({
 const encodeSession = Schema.encodeSync(storedSession);
 
 /** Stateful sessions consult current account and factor revisions on every read and commit. */
-export const sessionMapping: D1StatefulSessionMapping<
+export const sessionMapping: StatefulSessionMapping<
   TeamMember,
   typeof Tables.subjects,
   typeof Tables.credentials,
   typeof Tables.sessions,
   typeof Tables.flows,
-  typeof Tables.flows,
   string,
   string
 > = {
-  subject,
+  subject: { ...subject, activeStatusValue: 1, requirementColumns: [] },
   subjectId,
   credential: authorityCredential,
   constraints: requiredSessionConstraints,
   isConstraintConflict: conflict("auth_sessions.digest"),
-  d1: { engineNow, engineNowMillis: engineNow, activeSubjectStatusValue: 1 },
+  moduleId: Auth.sessions.moduleId,
+  clock: passwordMapping.clock,
+  d1: { primary: true },
   sessionId: {
     toNative: (value) => Effect.succeed(value),
     toSession: (value) =>
-      Schema.decodeUnknownEffect(Sessions.SessionId)(value).pipe(Effect.mapError(mappingError)),
+      Schema.decodeEffect(Sessions.SessionId)(value).pipe(Effect.mapError(mappingError)),
     equals: (left, right) => left === right,
   },
   session: {
@@ -310,46 +245,16 @@ export const sessionMapping: D1StatefulSessionMapping<
     sessionId: "sessionId",
     subjectId: "subjectId",
     digest: "digest",
-    version: "version",
     securityRevision: "securityRevision",
     issuedAt: "issuedAt",
     expiresAt: "expiresAt",
     absoluteExpiresAt: "absoluteExpiresAt",
     encodeInstant: DateTime.toEpochMillis,
-    encodeInsert: (record) => encodeSession(record),
+    // Keep the legacy NOT NULL column populated; current Yielded uses credentialVersion.
+    encodeInsert: (record) => ({ ...encodeSession(record), version: record.credentialVersion }),
     encodeRotation: encodeSession,
-    decode: (row) =>
-      Schema.decodeUnknownEffect(storedSession)(row).pipe(Effect.mapError(mappingError)),
+    decode: (row) => Schema.decodeEffect(storedSession)(row).pipe(Effect.mapError(mappingError)),
     allocateId: Effect.sync(() => crypto.randomUUID()),
-    allocateVersion: revision,
-  },
-  flow: {
-    table: Tables.flows,
-    flowId: "flowId",
-    subjectId: "subjectId",
-    state: "state",
-    pendingDigest: "pendingDigest",
-    dedupUntil: "dedupUntil",
-    pendingStateValue: "pending",
-    establishedStateValue: "established",
-    encodeInstant: DateTime.toEpochMillis,
-    decodeInstant: (value) =>
-      Schema.decodeUnknownEffect(Schema.DateTimeUtcFromMillis)(value).pipe(
-        Effect.mapError(mappingError),
-      ),
-    encodePendingInsert: ({ evidence, subjectId, pendingDigest, dedupUntil }) => ({
-      flowId: evidence.flowId,
-      subjectId,
-      pendingDigest,
-      state: "pending",
-      dedupUntil: DateTime.toEpochMillis(dedupUntil),
-    }),
-    encodeEstablishedInsert: ({ evidence, subjectId, dedupUntil }) => ({
-      flowId: evidence.flowId,
-      subjectId,
-      state: "established",
-      dedupUntil: DateTime.toEpochMillis(dedupUntil),
-    }),
   },
 };
 
@@ -364,7 +269,7 @@ export const ClaimsLive = (database: Database["Service"]) => ({
         .limit(1);
       const row = rows[0];
       if (row === undefined) return yield* Password.PasswordUnavailable.make({});
-      return yield* Schema.decodeUnknownEffect(TeamMember)(row).pipe(
+      return yield* Schema.decodeEffect(TeamMember)(row).pipe(
         Effect.mapError(() => Password.PasswordUnavailable.make({})),
       );
     },
