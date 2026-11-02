@@ -7,17 +7,18 @@ codebase: `codegraph query`, `codegraph context`, `codegraph callers`, and
 `codegraph impact` are useful starting points. Run `codegraph status` and
 `codegraph sync` when the index needs updating; verify findings against source.
 
-- `bun run lint`: Oxlint with Foldkit's recommended preset and vendored anti-slop rules.
-- `bun run lint:fix`: apply available lint fixes; review the changes.
-- `bun run format`: format owned files with Oxfmt.
-- `bun run format:check`: check formatting without modifying files.
-- `bun run typecheck`: tsrs with Effect diagnostics via `@effect/tsgo`.
-- `bun run check`: lint, formatting, and typechecking.
-- `bun test test/unit`: local unit tests.
+- `vp run dev`: start both servers; `dev:web` starts the frontend and `dev:server` starts the backend.
+- `vp run lint`: Vite+ Oxlint with Foldkit's recommended preset and vendored anti-slop rules.
+- `vp run lint:fix`: apply available lint fixes; review the changes.
+- `vp run format`: format owned files with Vite+ Oxfmt.
+- `vp run format:check`: check formatting without modifying files.
+- `vp run typecheck`: tsrs with Effect diagnostics via `@effect/tsgo`.
+- `vp run check`: lint, formatting, and typechecking.
+- `vp run test`: local unit tests.
 
 Foldkit DevTools MCP is configured in `.mcp.json` and `.codex/config.toml`, using
 the locally installed `@foldkit/devtools-mcp`. Restart the agent after changing
-MCP configuration. Run `bun run dev:web` and open the app in a browser for a
+MCP configuration. Run `vp run dev:web` and open the app in a browser for a
 Runtime to appear. Call `foldkit_list_runtimes` first; select this project's
 Runtime before inspecting its Model or dispatching Messages. The Vite plugin
 discovers the local relay automatically, and `frontend/src/entry.ts` supplies the
@@ -25,8 +26,9 @@ Message schema for dispatch.
 The separate `@foldkit/devtools` development dependency supplies the in-browser
 overlay, which the Vite plugin mounts at the bottom right during development.
 
-Lint policy lives in `oxlint.config.ts`; formatting policy lives in
-`oxfmt.config.ts`. Anti-slop is owned, vendored code under
+Vite+ dev/build, lint, and formatting policy live in the root `vite.config.ts`.
+Keep Bun as the package manager and test runner; `vp run check` runs
+`vp check` followed by the Effect-aware typecheck. Anti-slop is owned, vendored code under
 `tools/oxlint/anti-slop/`, excluded from application linting and formatting.
 Consult its `UPSTREAM.md` before updating it. Its Effect rule currently checks
 relative project imports, not package or path-alias imports.

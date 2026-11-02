@@ -10,10 +10,11 @@ Venue Operations terminology. `CONTEXT.md` is unchanged.
 
 ```sh
 bun install --frozen-lockfile
-bun dev
+vp run dev
 ```
 
-Open **http://localhost:1339**. Alchemy runs the Worker and D1 locally and applies
+Open **http://localhost:1337**. The frontend proxies API requests to the local Worker
+on port 1339. Alchemy runs the Worker and D1 locally and applies
 the committed D1 migrations. Auth uses opaque server-side sessions, so local
 development needs no manually configured signing secret or cloud provisioning.
 Local database/state files live under the ignored `.alchemy/`.
@@ -27,23 +28,44 @@ their bridge is development-only.
 
 ### Frontend hot reload
 
-Start the local Worker and Vite together:
+Start the local Worker and Vite+ together:
 
 ```sh
-bun run dev:all
+vp run dev
 ```
 
-Open **http://localhost:1337**. Bun runs the existing `dev` and `dev:web`
-scripts in parallel; Vite proxies `/api/*` to the local Worker while preserving
-the frontend origin. Alternatively, run `bun dev` and `bun run dev:web` in
+Open **http://localhost:1337**. Vite+ runs the Worker task and frontend dev server
+in parallel; Vite proxies `/api/*` to the local Worker while preserving
+the frontend origin. Alternatively, run `vp run dev:server` and `vp run dev:web` in
 separate terminals. The Worker at 1339 serves the compiled frontend; restart
-`bun dev` (or run `bun run build:web`) after frontend edits if you use that URL
+`vp run dev:server` (or run `vp run build:web`) after frontend edits if you use that URL
 instead of Vite.
 
 The Worker uses a fixed policy for each local origin: `http://localhost:1339`
 and, through Vite, `http://localhost:1337`. The browser client uses the current
 origin. Production requires `AUTH_ORIGIN` to be the public HTTPS origin; the
 local Vite policy is enabled only with the default local configuration.
+
+## Project tooling
+
+Vite+ 1.4.0 runs frontend development, production builds, Oxlint, and Oxfmt.
+The root `vite.config.ts` contains the task definitions, frontend configuration, and existing
+Foldkit/anti-slop lint and formatting policies. Builds still emit to
+`frontend/dist`; the frontend still uses port 1337 and proxies the API to 1339.
+
+Use the pinned Bun version in `package.json` to install dependencies. All commands are defined under
+`run.tasks` in `vite.config.ts` and invoked with `vp run <name>`. Without a
+global Vite+ installation, use `bunx --no-install vp run <name>`. `vp run check` runs
+`vp check` plus the Effect-aware `effect-tsgo tsrs` check. Tests continue to
+use Bun via `vp run test`; `vp test` invokes Vitest and is not this project's
+test command. Tasks disable caching to preserve fresh execution and environment
+variables, including `AUTH_TEST_URL` and deployment configuration.
+The explicit `@oxlint/plugins` dependency supports the unchanged
+vendored anti-slop rules.
+
+The `vite` dependency and override point to the matching Vite+ core release so
+Foldkit and Tailwind resolve the same Vite instance. When upgrading Vite+, keep
+these versions aligned using the [Vite+ migration guide](https://viteplus.dev/guide/migrate).
 
 ## UI components (Foldcn)
 
@@ -150,15 +172,15 @@ Export application tables from `backend/schema.ts`; it also exposes the owned
 Yielded tables and the password rate-limit table. After changing a table:
 
 ```sh
-bun run db:generate --name=describe_change
-bun run format
-bun run check
-bun test test/unit
+vp run db:generate --name=describe_change
+vp run format
+vp run check
+vp run test
 ```
 
 Review and commit the generated SQL and snapshot together. Generation is local,
 needs no Cloudflare credentials, and never applies or pushes schema changes.
-Alchemy applies committed migrations during `bun dev` or an explicitly requested
+Alchemy applies committed migrations during `vp run dev` or an explicitly requested
 deploy; do not use Drizzle Kit or Wrangler to maintain a second migration ledger.
 Restart the local stack after adding a migration if it has not picked it up.
 
@@ -176,15 +198,15 @@ application-owned mappings in `backend/auth-storage.ts`.
 ## Verification
 
 ```sh
-bun run check         # lint, formatting, strict typecheck
-bun run build         # strict typecheck + frontend production build
-bun run test          # unit tests; no infrastructure needed
+vp run check         # lint, formatting, strict typecheck
+vp run build         # strict typecheck + frontend production build
+vp run test          # unit tests; no infrastructure needed
 ```
 
 With the local stack running:
 
 ```sh
-AUTH_TEST_URL=http://localhost:1339 bun run test:integ
+AUTH_TEST_URL=http://localhost:1339 vp run test:integ
 ```
 
 The integration test never deploys infrastructure and accepts only loopback
@@ -236,7 +258,7 @@ Application access remains limited to an authenticated foundation:
 credentials described in `.env.example`, and can incur charges:
 
 ```sh
-AUTH_ORIGIN=https://your-public-origin.example bun run deploy
+AUTH_ORIGIN=https://your-public-origin.example vp run deploy
 ```
 
 This targets the `production` stage, creates the Worker and D1, and applies the
