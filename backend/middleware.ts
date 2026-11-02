@@ -1,3 +1,5 @@
+// @effect-diagnostics unstableApiUsage:off
+// The authentication middleware intentionally uses Effect HTTP request markers.
 import { Auth as YieldedAuth } from "@yielded/auth";
 import * as Context from "effect/Context";
 import * as HttpRouter from "effect/http/HttpRouter";
@@ -9,17 +11,15 @@ import { Auth } from "./auth.ts";
 import { CurrentTeamMember, TeamMember } from "./current-team-member.ts";
 
 /** No valid session was presented. */
-export class Unauthorized extends Schema.TaggedError<Unauthorized>()(
-  "Unauthorized",
-  {},
-  { httpApiStatus: 401 },
-) {}
+export class Unauthorized extends Schema.TaggedError<
+  Unauthorized,
+  { readonly brand: unique symbol }
+>()("Unauthorized", {}, { httpApiStatus: 401 }) {}
 /** Session lookup failed; does not misclassify outages as invalid credentials. */
-export class AuthenticationUnavailable extends Schema.TaggedError<AuthenticationUnavailable>()(
-  "AuthenticationUnavailable",
-  {},
-  { httpApiStatus: 503 },
-) {}
+export class AuthenticationUnavailable extends Schema.TaggedError<
+  AuthenticationUnavailable,
+  { readonly brand: unique symbol }
+>()("AuthenticationUnavailable", {}, { httpApiStatus: 503 }) {}
 
 /** Resolves and parses the session identity before any protected handler runs. */
 export class Authentication extends HttpApiMiddleware.Service<
@@ -48,7 +48,7 @@ export class Authentication extends HttpApiMiddleware.Service<
             Effect.mapError(() => new AuthenticationUnavailable()),
           );
           if (session === null) return yield* new Unauthorized();
-          const identity = yield* Schema.decodeUnknownEffect(TeamMember)(session.claims).pipe(
+          const identity = yield* Schema.decodeEffect(TeamMember)(session.claims).pipe(
             Effect.mapError(() => new AuthenticationUnavailable()),
           );
           return yield* Effect.provideService(httpEffect, CurrentTeamMember, identity);

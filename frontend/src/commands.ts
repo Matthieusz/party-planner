@@ -4,10 +4,13 @@ import { TeamMember } from "../../backend/current-team-member.ts";
 import { AuthClient } from "./auth-client.ts";
 import { Message, Password } from "./message.ts";
 
-class RequestFailed extends Schema.TaggedError<RequestFailed>()("RequestFailed", {
-  message: Schema.String,
-  cause: Schema.optionalKey(Schema.Defect()),
-}) {}
+class RequestFailed extends Schema.TaggedError<RequestFailed, { readonly brand: unique symbol }>()(
+  "RequestFailed",
+  {
+    message: Schema.String,
+    cause: Schema.optionalKey(Schema.Defect()),
+  },
+) {}
 
 const request = Effect.fn("AuthClient.request")(function* (path: string) {
   return yield* Effect.tryPromise({

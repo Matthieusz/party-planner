@@ -1,3 +1,5 @@
+// @effect-diagnostics unstableApiUsage:off
+// The HTTP adapter intentionally uses Effect HTTP API builders.
 import { Http as AuthHttp } from "@yielded/auth";
 import * as Http from "alchemy/Http";
 import * as Effect from "effect/Effect";

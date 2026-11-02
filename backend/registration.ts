@@ -23,7 +23,7 @@ export const registrationStrategy = {
     const registration = yield* Registration;
     return {
       register: Effect.fn("Registration.request")(function* (input: typeof RegisterInput.Encoded) {
-        const parsed = yield* Schema.decodeUnknownEffect(RegisterInput)(input).pipe(
+        const parsed = yield* Schema.decodeEffect(RegisterInput)(input).pipe(
           Effect.mapError(() => Password.PasswordRejected.make({})),
         );
         return yield* registration.register(parsed);

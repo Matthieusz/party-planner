@@ -1,3 +1,5 @@
+// @effect-diagnostics unstableApiUsage:off
+// HTTP tests intentionally exercise the Effect HTTP router.
 import { Sessions } from "@yielded/auth";
 import { expect, test } from "bun:test";
 import { Effect, Layer } from "effect";

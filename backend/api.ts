@@ -1,3 +1,5 @@
+// @effect-diagnostics unstableApiUsage:off
+// The application API contract intentionally uses Effect HTTP API.
 import { AuthContract as YieldedContract } from "@yielded/auth";
 import * as Schema from "effect/Schema";
 import * as HttpApi from "effect/http-api/HttpApi";
