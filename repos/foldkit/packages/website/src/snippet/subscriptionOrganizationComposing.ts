@@ -1,6 +1,6 @@
 // page/settings/subscription.ts
-import { Effect, Schema, Stream } from 'effect'
-import { Subscription } from 'foldkit'
+import { Effect, Option, Schema, Stream } from 'effect'
+import { Dom, Subscription } from 'foldkit'
 
 import {
   GotThemeMenuMessage,
@@ -14,7 +14,7 @@ const themeMenuSubscriptions = Subscription.lift(ThemeMenu.subscriptions)<
   Model,
   Message
 >({
-  toChildModel: model => model.themeMenu,
+  read: model => Option.some(model.themeMenu),
   toParentMessage: message => GotThemeMenuMessage({ message }),
 })
 
@@ -27,10 +27,14 @@ const localSubscriptions = Subscription.make<Model, Message>()(entry => ({
       }),
       dependenciesToStream: ({ hasUnsavedChanges }) =>
         Stream.when(
-          Stream.fromEventListener<BeforeUnloadEvent>(
-            window,
-            'beforeunload',
-          ).pipe(Stream.map(StartedNavigationAway)),
+          Dom.streamFromEventFilterMapPreventDefault({
+            target: window,
+            type: 'beforeunload',
+            filterMapEvent: event => {
+              event.returnValue = true
+              return Option.some(StartedNavigationAway())
+            },
+          }),
           Effect.sync(() => hasUnsavedChanges),
         ),
     },

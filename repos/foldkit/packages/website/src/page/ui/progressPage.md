@@ -16,7 +16,7 @@ Pass `value` when the amount completed is known. Spread `attributes.label` onto 
 
 ::Demo{name="basic"}
 
-::Snippet{name="uiProgressBasic" label="progress example"}
+::Snippet{name="uiProgressBasic" label="Progress"}
 
 ### Indeterminate
 
@@ -24,7 +24,7 @@ Omit `value` when progress cannot yet be quantified. The progressbar then omits 
 
 ::Demo{name="indeterminate"}
 
-::Snippet{name="uiProgressIndeterminate" label="indeterminate progress example"}
+::Snippet{name="uiProgressIndeterminate" label="Indeterminate progress"}
 
 ## Styling
 
@@ -44,7 +44,11 @@ For determinate progress, `indicator` carries an inline `width` matching the val
 
 The progressbar receives `role="progressbar"` and an accessible name. By default, it is named through `aria-labelledby`, which points to the id carried by the `label` attribute group. Use `ariaLabel` when there is no visible label, or `ariaLabelledBy` to reference a different labeling element. When both overrides are provided, `ariaLabel` takes precedence.
 
+### Numeric Values
+
 Determinate progress receives `aria-valuemin`, `aria-valuemax`, and `aria-valuenow`. The value is clamped into `[min, max]`; if `max` is lower than `min`, it is normalized to `min` before the attributes are emitted. Indeterminate progress omits all three numeric ARIA attributes to communicate that its current value is unknown.
+
+### Value Announcements
 
 `valueText` accepts either a string or a `(value, max) => string` formatter. Strings work for both states. The formatter is evaluated only for determinate progress, because indeterminate progress has no numeric value to format.
 

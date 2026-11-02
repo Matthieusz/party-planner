@@ -11,25 +11,32 @@ import { join } from 'node:path'
 // without the `foldkit/experimental/server` export the plugin imports.
 const FLOORS = [
   {
+    packageDir: 'packages/node',
+    packageName: '@foldkit/node',
+    dependency: 'foldkit',
+    minimum: '0.165.0',
+    safePackageVersion: '0.1.0',
+  },
+  {
     packageDir: 'packages/ui',
     packageName: '@foldkit/ui',
     dependency: 'foldkit',
-    minimum: '0.165.0',
-    safePackageVersion: '0.165.0',
+    minimum: '0.167.0',
+    safePackageVersion: '0.167.0',
   },
   {
     packageDir: 'packages/devtools',
     packageName: '@foldkit/devtools',
     dependency: 'foldkit',
-    minimum: '0.165.0',
-    safePackageVersion: '0.165.0',
+    minimum: '0.167.0',
+    safePackageVersion: '0.167.0',
   },
   {
     packageDir: 'packages/devtools',
     packageName: '@foldkit/devtools',
     dependency: '@foldkit/ui',
-    minimum: '0.165.0',
-    safePackageVersion: '0.165.0',
+    minimum: '0.167.0',
+    safePackageVersion: '0.167.0',
   },
   {
     packageDir: 'packages/devtools-mcp',
@@ -49,8 +56,8 @@ const FLOORS = [
     packageDir: 'packages/vite-plugin-foldkit',
     packageName: '@foldkit/vite-plugin',
     dependency: 'foldkit',
-    minimum: '0.165.0',
-    safePackageVersion: '0.26.0',
+    minimum: '0.167.0',
+    safePackageVersion: '0.27.0',
   },
 ] as const
 

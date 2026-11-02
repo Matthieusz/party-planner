@@ -1,5 +1,6 @@
 import { Schema } from 'effect'
 import { File, Calendar as FoldkitCalendar } from 'foldkit'
+import { defineTaggedUnion } from 'foldkit/schema'
 
 import {
   Animation,
@@ -60,6 +61,19 @@ export const DemoColumn = Schema.Struct({
   id: Schema.String,
   label: Schema.String,
   cards: Schema.Array(DemoCard),
+})
+
+export const VirtualListChatMessage = Schema.Struct({
+  id: Schema.Number,
+  body: Schema.String,
+  isExpanded: Schema.Boolean,
+})
+
+export type VirtualListChatMessage = typeof VirtualListChatMessage.Type
+
+export const VirtualListChatStartProximity = defineTaggedUnion({
+  Away: {},
+  Near: {},
 })
 
 export const Model = Schema.Struct({
@@ -139,5 +153,9 @@ export const Model = Schema.Struct({
   animationDemo: Animation.Model,
   virtualListDemo: VirtualList.Model,
   virtualListVariableDemo: VirtualList.Model,
+  virtualListChatDemo: VirtualList.Model,
+  virtualListChatMessages: Schema.Array(VirtualListChatMessage),
+  virtualListChatNextId: Schema.Number,
+  virtualListChatStartProximity: VirtualListChatStartProximity,
 })
 export type Model = typeof Model.Type

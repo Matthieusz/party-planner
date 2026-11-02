@@ -1,9 +1,10 @@
+import { Option } from 'effect'
 import {
   type Server as HttpServer,
   createServer as createHttpServer,
   request as nodeRequest,
 } from 'node:http'
-import { createServer as createNetServer } from 'node:net'
+import type { AddressInfo } from 'node:net'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -21,6 +22,7 @@ import { describe, expect, it, onTestFinished } from 'vitest'
 
 import { foldkit } from '../src/index.ts'
 import { foldkitSsr } from '../src/ssr.ts'
+import { boundPort } from './boundPort.ts'
 
 type RawResponse = Readonly<{
   status: number
@@ -105,23 +107,12 @@ const FOLDKIT_BUILD_TOKEN_URL = `/@fs${resolve(
   dirname(fileURLToPath(import.meta.resolve('foldkit'))),
   'buildToken.js',
 )}`
-const findFreePort = () =>
-  new Promise<number>((resolvePort, reject) => {
-    const probe = createNetServer()
-    probe.on('error', error => {
-      probe.close()
-      reject(error)
-    })
-    probe.listen(0, '127.0.0.1', () => {
-      const address = probe.address()
-      if (address === null || typeof address === 'string') {
-        probe.close()
-        reject(new Error('Could not determine a free port'))
-        return
-      }
-      probe.close(() => resolvePort(address.port))
-    })
-  })
+const AGGREGATE_DEV_SERVER_TEST_TIMEOUT_MS = 20_000
+const originOf = (address: AddressInfo | string | null | undefined): string =>
+  `http://127.0.0.1:${Option.getOrThrowWith(
+    boundPort(address),
+    () => new Error('The server has no bound port'),
+  )}`
 
 const closeHttpServer = (server: HttpServer): Promise<void> =>
   new Promise((resolveClose, reject) => {
@@ -135,7 +126,6 @@ const closeHttpServer = (server: HttpServer): Promise<void> =>
   })
 
 const startProxyTarget = async (): Promise<string> => {
-  const port = await findFreePort()
   const server = createHttpServer((request, response) => {
     let body = ''
     request.setEncoding('utf8')
@@ -152,9 +142,10 @@ const startProxyTarget = async (): Promise<string> => {
   onTestFinished(() => closeHttpServer(server).catch(() => undefined))
   await new Promise<void>((resolveListen, reject) => {
     server.once('error', reject)
-    server.listen(port, '127.0.0.1', resolveListen)
+    server.listen(0, '127.0.0.1', resolveListen)
   })
-  return `http://127.0.0.1:${port}`
+
+  return originOf(server.address())
 }
 
 // A field already on the node response when the plugin's middleware runs.
@@ -229,6 +220,8 @@ const nonRunnableSsrPlugin: Plugin = {
 
 const startServer = async (
   options: Readonly<{
+    root?: string
+    clientEntry?: string
     base?: string
     origin?: string
     allowedHosts?: true | ReadonlyArray<string>
@@ -242,11 +235,10 @@ const startServer = async (
     warnings?: Array<string>
   }> = {},
 ) => {
-  const port = await findFreePort()
   const createServer =
     options.hostVite === true ? createHostServer : createViteServer
   const server = await createServer({
-    root: FIXTURE_ROOT,
+    root: options.root ?? FIXTURE_ROOT,
     ...(options.base === undefined ? {} : { base: options.base }),
     configFile: false,
     logLevel: 'silent',
@@ -261,6 +253,9 @@ const startServer = async (
         : [seedVaryPlugin(options.seedVary)]),
       foldkitSsr({
         serverEntry: '/entry.server.ts',
+        ...(options.clientEntry === undefined
+          ? {}
+          : { clientEntry: options.clientEntry }),
         ...(options.origin === undefined ? {} : { origin: options.origin }),
         ...(options.buildId === undefined ? {} : { buildId: options.buildId }),
         ...(options.quietStandDown === undefined
@@ -270,8 +265,7 @@ const startServer = async (
     ],
     server: {
       host: '127.0.0.1',
-      port,
-      strictPort: true,
+      port: 0,
       ...(options.cors === undefined ? {} : { cors: options.cors }),
       ...allowedHostsConfiguration(options.allowedHosts),
       ...(options.proxyTarget === undefined
@@ -281,32 +275,83 @@ const startServer = async (
   })
   onTestFinished(() => server.close().catch(() => undefined))
   await server.listen()
-  return `http://127.0.0.1:${port}`
+
+  return originOf(server.httpServer?.address())
 }
 
 const startAutomaticIdentityServer = async (): Promise<
   Readonly<{ origin: string; server: ViteDevServer }>
 > => {
-  const port = await findFreePort()
   const server = await createViteServer({
     root: AUTOMATIC_IDENTITY_FIXTURE_ROOT,
     configFile: false,
     logLevel: 'silent',
     plugins: [
       foldkit({
-        ssr: { serverEntry: '/entry.server.ts' },
+        devToolsMcpPort: false,
+        ssr: {
+          serverEntry: '/entry.server.ts',
+          clientEntry: '/entry.client.ts',
+        },
       }),
     ],
     server: {
       host: '127.0.0.1',
-      port,
-      strictPort: true,
+      port: 0,
     },
   })
   onTestFinished(() => server.close().catch(() => undefined))
   await server.listen()
-  return { origin: `http://127.0.0.1:${port}`, server }
+
+  return {
+    origin: originOf(server.httpServer?.address()),
+    server,
+  }
 }
+
+describe('code-rendered documents in development', () => {
+  it('serves nested pages with a source entry, custom document, and HMR without an HTML input', async () => {
+    const origin = await startServer({
+      root: resolve(import.meta.dirname, 'fixtures/build-assets'),
+      clientEntry: '/entry.client.ts',
+      base: '/app/',
+      buildId: 'document-dev',
+    })
+    const response = await fetch(`${origin}/app/deep/page?filter=yes`)
+    const html = await response.text()
+    expect(response.status).toBe(200)
+    expect(html).toContain('>/app/deep/page</main>')
+    expect(html).toContain('name="document-owner" content="server-entry"')
+    expect(html).toContain('src="/app/entry.client.ts"')
+    expect(html).toContain('/app/@vite/client')
+    expect((await fetch(`${origin}/app/entry.client.ts`)).status).toBe(200)
+
+    const head = await fetch(`${origin}/app/deep/page`, { method: 'HEAD' })
+    expect(head.status).toBe(200)
+    expect(await head.text()).toBe('')
+  })
+
+  it('reports a missing document renderer when a script entry is configured', async () => {
+    const origin = await startServer({ clientEntry: '/entry.client.ts' })
+    const response = await fetch(`${origin}/`)
+    expect(response.status).toBe(500)
+    expect(await response.text()).toContain('must export renderDocument')
+  })
+
+  it('rejects a client entry that is not root-relative', async () => {
+    await expect(
+      startServer({ clientEntry: 'entry.client.ts' }),
+    ).rejects.toThrow(/clientEntry must be a root-relative browser script URL/)
+  })
+
+  for (const base of ['', './']) {
+    it(`refuses relative base ${JSON.stringify(base)} in document mode`, async () => {
+      await expect(
+        startServer({ clientEntry: '/entry.client.ts', base }),
+      ).rejects.toThrow(/require an absolute URL or root-relative base/)
+    })
+  }
+})
 
 const automaticIdentityFrom = async (
   running: Readonly<{ origin: string; server: ViteDevServer }>,
@@ -329,15 +374,19 @@ const automaticIdentityFrom = async (
 }
 
 describe('foldkitSsr', () => {
-  it('compiles one fresh identity into Foldkit for each aggregate dev server', async () => {
-    const first = await startAutomaticIdentityServer()
-    const second = await startAutomaticIdentityServer()
+  it(
+    'compiles one fresh identity into Foldkit for each aggregate dev server',
+    async () => {
+      const first = await startAutomaticIdentityServer()
+      const second = await startAutomaticIdentityServer()
 
-    const firstBuildId = await automaticIdentityFrom(first)
-    const secondBuildId = await automaticIdentityFrom(second)
+      const firstBuildId = await automaticIdentityFrom(first)
+      const secondBuildId = await automaticIdentityFrom(second)
 
-    expect(secondBuildId).not.toBe(firstBuildId)
-  })
+      expect(secondBuildId).not.toBe(firstBuildId)
+    },
+    AGGREGATE_DEV_SERVER_TEST_TIMEOUT_MS,
+  )
 
   it('injects Rendered results and preserves their HTTP metadata', async () => {
     const origin = await startServer()

@@ -1,6 +1,6 @@
-import { Array, Effect, HashMap, Match, Number, Option } from 'effect'
+import { Array, Effect, HashMap, Match, Number, Option, Schema } from 'effect'
 import type { KeyValueStore } from 'effect/persistence/KeyValueStore'
-import { expect, expectTypeOf } from 'vitest'
+import { expect, expectTypeOf, vi } from 'vitest'
 
 import { describe, it } from '@effect/vitest'
 
@@ -12,6 +12,8 @@ import * as Story from '../test/story.js'
 import {
   type Commands,
   type Fold,
+  type FoldAt,
+  type FoldAtWithOutMessage,
   type FoldContext,
   type FoldWithOutMessage,
   type Return,
@@ -20,6 +22,7 @@ import {
   type StepWithOutMessage,
   combine,
   foldChild,
+  foldChildAt,
   foldChildStep,
   refresh,
   withOutMessage,
@@ -943,6 +946,324 @@ const resetCounterWithOutMessage = (
   outMessage: CounterOutMessage.ChangedValue(),
 })
 
+type Row = Readonly<{ id: string; counter: CounterModel }>
+
+type RowsModel = Readonly<{ rows: ReadonlyArray<Row> }>
+
+type GotRowMessage = Readonly<{ id: string; message: CounterMessage }>
+
+const RowOutMessage = defineMessageUnion({
+  ReportedValue: { rowId: Schema.String },
+  ReachedThreshold: { rowId: Schema.String },
+})
+type RowOutMessage = typeof RowOutMessage.Type
+
+const rowsModel: RowsModel = {
+  rows: [
+    { id: 'a', counter: { value: 1 } },
+    { id: 'b', counter: { value: 5 } },
+  ],
+}
+
+const readRow = (model: RowsModel, id: string) =>
+  Option.map(
+    Array.findFirst(model.rows, row => row.id === id),
+    row => row.counter,
+  )
+
+const writeRow = (
+  model: RowsModel,
+  id: string,
+  nextCounter: CounterModel,
+): RowsModel =>
+  modifyFields(model, {
+    rows: Array.map(row =>
+      row.id === id ? modifyFields(row, { counter: () => nextCounter }) : row,
+    ),
+  })
+
+const toGotRowMessage = (
+  id: string,
+  message: CounterMessage,
+): GotRowMessage => ({ id, message })
+
+const foldRow = foldChildAt({
+  update: counterUpdate,
+  readAt: readRow,
+  writeAt: writeRow,
+  toParentMessage: toGotRowMessage,
+})
+
+const foldRowIgnoringOutMessage = foldChildAt({
+  update: counterUpdateWithOutMessage,
+  readAt: readRow,
+  writeAt: writeRow,
+  toParentMessage: toGotRowMessage,
+  foldOutMessage: () =>
+    CounterOutMessage.match<Step<RowsModel, GotRowMessage>>({
+      ChangedValue: () => model => ({ model }),
+    }),
+})
+
+describe('foldChildAt', () => {
+  it('writes only the addressed child', () => {
+    expectTypeOf(foldRow).toEqualTypeOf<
+      FoldAt<RowsModel, GotRowMessage, string, CounterMessage>
+    >()
+
+    const rowFold = foldRow(rowsModel, 'b', Message.BumpedValue())
+    expect(rowFold.model.rows).toEqual([
+      { id: 'a', counter: { value: 1 } },
+      { id: 'b', counter: { value: 6 } },
+    ])
+
+    const maybeOriginal = Array.head(rowsModel.rows)
+    const maybeFolded = Array.head(rowFold.model.rows)
+    expect(Option.isSome(maybeOriginal)).toBe(true)
+    expect(Option.isSome(maybeFolded)).toBe(true)
+    if (Option.isSome(maybeOriginal) && Option.isSome(maybeFolded)) {
+      expect(maybeFolded.value).toBe(maybeOriginal.value)
+    }
+  })
+
+  it('lifts the child Command with the key', () => {
+    const rowFold = foldRow(rowsModel, 'a', Message.BumpedValue())
+    const maybeCommand = Array.head(rowFold.commands ?? [])
+
+    expect(Option.isSome(maybeCommand)).toBe(true)
+    if (Option.isSome(maybeCommand)) {
+      expect(Effect.runSync(maybeCommand.value.effect)).toEqual({
+        id: 'a',
+        message: Message.CompletedSaveCount(),
+      })
+    }
+  })
+
+  it('leaves the parent unchanged when the key is absent', () => {
+    const rowFold = foldRow(rowsModel, 'missing', Message.BumpedValue())
+    expect(rowFold.model).toBe(rowsModel)
+    expect(rowFold.commands ?? []).toEqual([])
+  })
+
+  it('creates OutMessage matchers only when a child emits an OutMessage', () => {
+    const foldRowOutMessage = vi.fn(() =>
+      CounterOutMessage.match<Step<RowsModel, GotRowMessage>>({
+        ChangedValue: () => model => ({ model }),
+      }),
+    )
+    const forwardRowOutMessage = vi.fn((key: string) =>
+      CounterOutMessage.match({
+        ChangedValue: () => RowOutMessage.ReportedValue({ rowId: key }),
+      }),
+    )
+    const foldReportingRow = foldChildAt({
+      update: counterUpdateWithOutMessage,
+      readAt: readRow,
+      writeAt: writeRow,
+      toParentMessage: toGotRowMessage,
+      foldOutMessage: foldRowOutMessage,
+      toParentOutMessage: forwardRowOutMessage,
+    })
+
+    foldReportingRow(rowsModel, 'missing', Message.BumpedValue())
+    foldReportingRow(rowsModel, 'a', Message.CompletedSaveCount())
+    expect(foldRowOutMessage).not.toHaveBeenCalled()
+    expect(forwardRowOutMessage).not.toHaveBeenCalled()
+
+    foldReportingRow(rowsModel, 'b', Message.BumpedValue())
+    expect(foldRowOutMessage).toHaveBeenCalledExactlyOnceWith(
+      'b',
+      expect.any(Object),
+    )
+    expect(forwardRowOutMessage).toHaveBeenCalledExactlyOnceWith('b')
+  })
+
+  it('passes the key to foldOutMessage after writing the child', () => {
+    const recordId = vi.fn<(id: string) => void>()
+    const foldRowOutMessage = foldChildAt({
+      update: counterUpdateWithOutMessage,
+      readAt: readRow,
+      writeAt: writeRow,
+      toParentMessage: toGotRowMessage,
+      foldOutMessage: (key: string) =>
+        CounterOutMessage.match<Step<RowsModel, GotRowMessage>>({
+          ChangedValue: () => model => {
+            recordId(key)
+            return { model }
+          },
+        }),
+    })
+
+    const rowFold = foldRowOutMessage(rowsModel, 'b', Message.BumpedValue())
+    expect(recordId).toHaveBeenCalledExactlyOnceWith('b')
+    expect(rowFold.model.rows).toEqual([
+      { id: 'a', counter: { value: 1 } },
+      { id: 'b', counter: { value: 6 } },
+    ])
+  })
+
+  it('forwards a child OutMessage with its key', () => {
+    const foldReportingRow = foldChildAt({
+      update: counterUpdateWithOutMessage,
+      readAt: readRow,
+      writeAt: writeRow,
+      toParentMessage: toGotRowMessage,
+      toParentOutMessage: (id: string) =>
+        CounterOutMessage.match({
+          ChangedValue: () => RowOutMessage.ReportedValue({ rowId: id }),
+        }),
+    })
+
+    expectTypeOf(foldReportingRow).toEqualTypeOf<
+      FoldAtWithOutMessage<
+        RowsModel,
+        GotRowMessage,
+        string,
+        CounterMessage,
+        typeof RowOutMessage.ReportedValue.Type
+      >
+    >()
+
+    const rowFold = foldReportingRow(rowsModel, 'b', Message.BumpedValue())
+    expect(rowFold.outMessage).toEqual(
+      RowOutMessage.ReportedValue({ rowId: 'b' }),
+    )
+
+    const noOutMessageFold = foldReportingRow(
+      rowsModel,
+      'b',
+      Message.CompletedSaveCount(),
+    )
+    expect(noOutMessageFold.outMessage).toBeUndefined()
+  })
+
+  it('emits a derived OutMessage without forwarding the child OutMessage', () => {
+    const foldRowOutMessage = (key: string) =>
+      CounterOutMessage.match<
+        StepWithOutMessage<
+          RowsModel,
+          GotRowMessage,
+          typeof RowOutMessage.ReachedThreshold.Type
+        >
+      >({
+        ChangedValue: () => model => ({
+          model,
+          outMessage: RowOutMessage.ReachedThreshold({ rowId: key }),
+        }),
+      })
+
+    const foldDerivingRow = foldChildAt({
+      update: counterUpdateWithOutMessage,
+      readAt: readRow,
+      writeAt: writeRow,
+      toParentMessage: toGotRowMessage,
+      foldOutMessage: foldRowOutMessage,
+    })
+
+    expectTypeOf(foldDerivingRow).toEqualTypeOf<
+      FoldAtWithOutMessage<
+        RowsModel,
+        GotRowMessage,
+        string,
+        CounterMessage,
+        typeof RowOutMessage.ReachedThreshold.Type
+      >
+    >()
+
+    const rowFold = foldDerivingRow(rowsModel, 'b', Message.BumpedValue())
+    expect(rowFold.outMessage).toEqual(
+      RowOutMessage.ReachedThreshold({ rowId: 'b' }),
+    )
+  })
+
+  it('prefers a derived OutMessage and lifts local Commands with the key', () => {
+    const forwardRowOutMessage = vi.fn((id: string) =>
+      CounterOutMessage.match({
+        ChangedValue: () => RowOutMessage.ReportedValue({ rowId: id }),
+      }),
+    )
+    const foldReportingRowOutMessage = (
+      key: string,
+      { liftCommand }: FoldContext<CounterMessage, GotRowMessage>,
+    ) =>
+      CounterOutMessage.match<
+        StepWithOutMessage<RowsModel, GotRowMessage, RowOutMessage>
+      >({
+        ChangedValue: () => model => {
+          const commands = [liftCommand(saveCount)]
+
+          if (key === 'b') {
+            return {
+              model,
+              commands,
+              outMessage: RowOutMessage.ReachedThreshold({ rowId: key }),
+            }
+          }
+
+          return { model, commands }
+        },
+      })
+
+    const foldReportingRow = foldChildAt({
+      update: counterUpdateWithOutMessage,
+      readAt: readRow,
+      writeAt: writeRow,
+      toParentMessage: toGotRowMessage,
+      toParentOutMessage: forwardRowOutMessage,
+      foldOutMessage: foldReportingRowOutMessage,
+    })
+
+    const derivedFold = foldReportingRow(rowsModel, 'b', Message.BumpedValue())
+    expect(derivedFold.outMessage).toEqual(
+      RowOutMessage.ReachedThreshold({ rowId: 'b' }),
+    )
+    expect(forwardRowOutMessage).not.toHaveBeenCalled()
+
+    const maybeLocalCommand = Array.last(derivedFold.commands ?? [])
+    expect(Option.isSome(maybeLocalCommand)).toBe(true)
+    if (Option.isSome(maybeLocalCommand)) {
+      expect(Effect.runSync(maybeLocalCommand.value.effect)).toEqual({
+        id: 'b',
+        message: Message.CompletedSaveCount(),
+      })
+    }
+
+    const forwardedFold = foldReportingRow(
+      rowsModel,
+      'a',
+      Message.BumpedValue(),
+    )
+    expect(forwardedFold.outMessage).toEqual(
+      RowOutMessage.ReportedValue({ rowId: 'a' }),
+    )
+    expect(forwardRowOutMessage).toHaveBeenCalledExactlyOnceWith('a')
+  })
+
+  it('accepts a foldOutMessage that ignores the key', () => {
+    const rowFold = foldRowIgnoringOutMessage(
+      rowsModel,
+      'a',
+      Message.BumpedValue(),
+    )
+    expect(rowFold.model.rows).toEqual([
+      { id: 'a', counter: { value: 2 } },
+      { id: 'b', counter: { value: 5 } },
+    ])
+  })
+
+  it('composes data-last with combine', () => {
+    const combined = combine([
+      foldRow('a', Message.BumpedValue()),
+      foldRow('b', Message.BumpedValue()),
+    ])(rowsModel)
+
+    expect(combined.model.rows).toEqual([
+      { id: 'a', counter: { value: 2 } },
+      { id: 'b', counter: { value: 6 } },
+    ])
+  })
+})
+
 describe('foldChildStep', () => {
   const foldCounterReset = foldChildStep({
     update: resetCounter,
@@ -1408,6 +1729,51 @@ describe('types', () => {
         TestServices | PersistenceServices
       >
     >()
+  })
+
+  it('foldChildAt combines service requirements with keyed OutMessage forwarding', () => {
+    const foldRowOutMessageWithPersistence = () =>
+      CounterOutMessage.match<
+        Step<RowsModel, TestMessage, PersistenceServices>
+      >({
+        ChangedValue: () => model => ({
+          model,
+          commands: [notifyWithPersistence],
+        }),
+      })
+
+    const foldWithServices = foldChildAt({
+      update: updateCounterWithServices,
+      readAt: readRow,
+      writeAt: writeRow,
+      toParentMessage: toGotRowMessage,
+      toParentOutMessage: (id: string) =>
+        CounterOutMessage.match({
+          ChangedValue: () => RowOutMessage.ReportedValue({ rowId: id }),
+        }),
+      foldOutMessage: foldRowOutMessageWithPersistence,
+    })
+
+    expectTypeOf(foldWithServices).toEqualTypeOf<
+      FoldAtWithOutMessage<
+        RowsModel,
+        GotRowMessage | TestMessage,
+        string,
+        CounterMessage,
+        typeof RowOutMessage.ReportedValue.Type,
+        TestServices | PersistenceServices
+      >
+    >()
+  })
+
+  it('foldChildAt rejects an OutMessage child without a handler', () => {
+    foldChildAt({
+      // @ts-expect-error a ReturnWithOutMessage child update requires an OutMessage handler
+      update: counterUpdateWithOutMessage,
+      readAt: readRow,
+      writeAt: writeRow,
+      toParentMessage: toGotRowMessage,
+    })
   })
 
   it('foldChildStep combines child and OutMessage Step service requirements', () => {

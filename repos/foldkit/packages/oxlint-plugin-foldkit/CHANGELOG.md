@@ -1,5 +1,37 @@
 # @foldkit/oxlint-plugin
 
+## 0.15.4
+
+### Patch Changes
+
+- [#1852](https://github.com/foldkit/foldkit/pull/1852) [`af4b0bc`](https://github.com/foldkit/foldkit/commit/af4b0bc7b683ba7ccc2e6b789cdcca2f8ba4218e) Thanks [@devinjameson](https://github.com/devinjameson)! - Upgrade Foldkit and its companion packages to Effect 4.1. Published Effect dependencies and peer dependencies accept 4.1 patch releases through `~4.1.0` ranges. The workspace and new SPA, SSG, and SSR projects use the verified `4.1.0` release.
+
+  Update `effect` and every `@effect/*` runtime or test package in your app to a compatible 4.1 release together. Effect 4.1 replaces `Crypto.Crypto` with services in `effect/crypto`. For UUIDs, import `SecureRandom` from `effect/crypto`, acquire `SecureRandom.SecureRandom`, and call `secureRandom.uuidV4()`. Provide `BrowserCrypto.layerSecureRandom` or `NodeCrypto.layerSecureRandom`; UUID generation has no error channel and does not need `Effect.orDie`. Foldkit's Vite plugin, examples, scaffold guidance, and lint diagnostics use this API.
+
+  Effect minor upgrades are reviewed explicitly because they can change APIs. Patch releases within 4.1 are accepted without requiring a new Foldkit release.
+
+  The Node adapter, Vite plugin, and DevTools MCP server require Node.js 22.19.0 or newer, matching the Effect 4.1 Node platform packages. Upgrade Node.js before installing these packages on Node.js 20. The Node adapter explicitly constrains `@effect/platform-node-shared` to 4.1 as well, matching the CLI and Vite plugin, so npm can resolve the Node platform packages within the supported Effect minor.
+
+  Effect 4.1 starts `Stream.callback` setup immediately. For asynchronous Mount acquisition that must stop on unmount, pass `{ interruptible: true }` as the third argument to `Effect.acquireRelease` and construct the handle after the interruptible wait. The map example and chart integration guide use this option so unmounting during a library import does not construct a handle on a detached element.
+
+## 0.15.3
+
+### Patch Changes
+
+- [#1608](https://github.com/foldkit/foldkit/pull/1608) [`9d0f289`](https://github.com/foldkit/foldkit/commit/9d0f28976e5e1edd19db8118da5b43ad7c444adc) Thanks [@devinjameson](https://github.com/devinjameson)! - Recognize direct-field `Update.foldChildAt` boundaries and empty curried `toParentOutMessage` mappers. Direct-field inference requires `writeAt` to replace that field, avoiding false positives for keyed collection updates.
+
+- [#1616](https://github.com/foldkit/foldkit/pull/1616) [`5f7e247`](https://github.com/foldkit/foldkit/commit/5f7e2470d7037b97f768a5cc478e2a0d920e5b28) Thanks [@devinjameson](https://github.com/devinjameson)! - Point the stream event cancellation rule's guidance to `Dom.streamFromEventFilterMapPreventDefault`.
+
+## 0.15.2
+
+### Patch Changes
+
+- [#1425](https://github.com/foldkit/foldkit/pull/1425) [`9d701af`](https://github.com/foldkit/foldkit/commit/9d701af6a75161962a9600422743d7531c0e4828) Thanks [@rodygosset](https://github.com/rodygosset)! - `foldkit/got-prefix-requires-submodel-payload` now recognizes the Message Schema of a Query defined beside its parent Message union. Previously, `GotPostsMessage: { message: postsQuery.Message }` was reported even when `postsQuery` came from `Query.define`.
+
+  Unrelated local objects that happen to expose a `.Message` property still do not count as Submodels, so the rule continues to reject misleading `Got*` Messages.
+
+- [#1569](https://github.com/foldkit/foldkit/pull/1569) [`a7b74ae`](https://github.com/foldkit/foldkit/commit/a7b74aec40de4d8d6adf77836dbe8ce2e82f7cc9) Thanks [@birbprophet](https://github.com/birbprophet)! - Accept `effect-oxlint` 0.4 alongside 0.3. Projects that also use `@mpsuesser/oxlint-plugin-effect` 0.6, which depends on `effect-oxlint` 0.4.0, now install a single copy instead of two.
+
 ## 0.15.1
 
 ### Patch Changes

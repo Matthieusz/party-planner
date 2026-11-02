@@ -16,7 +16,7 @@ Open the Dialog from a trigger by dispatching your own Message. Fold `Dialog.ope
 
 ::Demo{name="dialog"}
 
-::Snippet{name="uiDialogBasic" label="dialog example"}
+::Snippet{name="uiDialogBasic" label="Dialog"}
 
 ### Animated
 
@@ -24,7 +24,7 @@ Pass `isAnimated: true` at init to coordinate animations. The component manages 
 
 ::Demo{name="animated"}
 
-::Snippet{name="uiDialogAnimated" label="animated dialog example"}
+::Snippet{name="uiDialogAnimated" label="Animated dialog"}
 
 ### Field
 
@@ -32,7 +32,7 @@ A field inside a dialog can open its own overlay, like a Combobox or DatePicker.
 
 ::Demo{name="overlay"}
 
-::Snippet{name="uiDialogOverlay" label="field dialog example"}
+::Snippet{name="uiDialogOverlay" label="Combobox overlay in a Dialog"}
 
 ### Stacked
 
@@ -40,7 +40,7 @@ Use a separate Dialog Model for each level and open the second from a button in 
 
 ::Demo{name="nested"}
 
-::Snippet{name="uiDialogNested" label="stacked dialogs example"}
+::Snippet{name="uiDialogNested" label="Stacked dialogs"}
 
 ## Styling
 
@@ -60,7 +60,7 @@ When `isAnimated` is true, enter/leave animations flow through the [Animation](/
 
 Use `Dialog.boot()` when a Dialog should be open when the application starts. Pass its result to `Update.foldChildInit` so the parent incorporates the Dialog Model, maps its Commands to the parent Message type, and handles its `Opened` OutMessage.
 
-::Snippet{name="uiDialogInitiallyOpen" label="starting with an open Dialog"}
+::Snippet{name="uiDialogInitiallyOpen" label="Starting with an open Dialog"}
 
 See [Folding Update with Update.foldChild](/core/submodel#fold-child) for the general child-initialization pattern.
 
@@ -73,9 +73,15 @@ See [Folding Update with Update.foldChild](/core/submodel#fold-child) for the ge
 
 ## Accessibility
 
+### Focus and Modal Isolation
+
 When the Dialog opens, Foldkit marks surrounding content inert and `aria-hidden="true"`, and sets `aria-modal="true"` on the Dialog. Keyboard focus stays inside until it closes, then the original inert and ARIA state is restored before focus returns to the element that opened it. The DevTools overlay remains interactive during development.
 
+### Names and Descriptions
+
 The dialog always sets `aria-labelledby` on the native element. Set `hasDescription: true` when you render a description to add `aria-describedby`; leaving it false prevents a dangling reference when no description is present. Spread `...title` onto your heading (`h.h2([...title], [...])`) and `...description` onto your description element (`h.p([...description], [...])`). You never construct either id yourself.
+
+#### Reuse the Managed IDs
 
 The ids are framework-managed (the `-dialog-title`, `-dialog-description`, and `-panel` suffixes on the configured id). Going through the render info keeps them unique for you. The `Dialog.titleId(model)` and `Dialog.descriptionId(model)` helpers return the same ids as plain strings for the cases where you need the id as a value outside `toView`, such as a Command that calls `getElementById` or a cross-element reference. As a backstop, the runtime warns on any duplicate id in the rendered tree in development.
 

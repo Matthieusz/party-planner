@@ -1,4 +1,4 @@
-import { Array, Number, Option, Schema, pipe } from 'effect'
+import { Array, Match, Number, Option, Schema, pipe } from 'effect'
 import { Update } from 'foldkit'
 import { defineTaggedUnion } from 'foldkit/schema'
 import { modifyFields } from 'foldkit/struct'
@@ -28,12 +28,9 @@ import { DemoMenu, type MenuItem } from './demo/menu'
 import { PlanRadioGroup } from './demo/radioGroup'
 import { DemoTabs } from './demo/tabs'
 import { Toast } from './demo/toastModule'
-import {
-  ROW_COUNT as VIRTUAL_LIST_ROW_COUNT,
-  variableActivities,
-  variableRowHeightPx,
-} from './demo/virtualList'
+import { ROW_COUNT as VIRTUAL_LIST_ROW_COUNT } from './demo/virtualList'
 import { Message } from './message'
+import { VirtualListChatStartProximity } from './model'
 import type { Model } from './model'
 import type {
   City,
@@ -42,6 +39,7 @@ import type {
   DemoTab,
   ListboxItem,
   Plan,
+  VirtualListChatMessage,
 } from './model'
 
 // REORDER
@@ -1057,13 +1055,7 @@ const foldVirtualListVariableDemo = Update.foldChild({
 })
 
 const foldVirtualListVariableDemoScrollToIndex = Update.foldChild({
-  update: (virtualList: VirtualList.Model, index: number) =>
-    VirtualList.scrollToIndexVariable(
-      virtualList,
-      variableActivities,
-      variableRowHeightPx,
-      index,
-    ),
+  update: VirtualList.scrollToIndex,
   read: (model: Model) => Option.some(model.virtualListVariableDemo),
   write: (model, nextVirtualListVariableDemo) =>
     modifyFields(model, {
@@ -1072,6 +1064,103 @@ const foldVirtualListVariableDemoScrollToIndex = Update.foldChild({
   toParentMessage: message =>
     Message.GotVirtualListVariableDemoMessage({ message }),
 })
+
+const foldVirtualListChatDemo = Update.foldChild({
+  update: VirtualList.update,
+  read: (model: Model) => Option.some(model.virtualListChatDemo),
+  write: (model, nextVirtualListChatDemo) =>
+    modifyFields(model, {
+      virtualListChatDemo: () => nextVirtualListChatDemo,
+    }),
+  toParentMessage: message =>
+    Message.GotVirtualListChatDemoMessage({ message }),
+})
+
+const foldVirtualListChatItemsChanged = Update.foldChild({
+  update: VirtualList.informItemsChanged,
+  read: (model: Model) => Option.some(model.virtualListChatDemo),
+  write: (model, nextVirtualListChatDemo) =>
+    modifyFields(model, {
+      virtualListChatDemo: () => nextVirtualListChatDemo,
+    }),
+  toParentMessage: message =>
+    Message.GotVirtualListChatDemoMessage({ message }),
+})
+
+const foldVirtualListChatScrollToKey = Update.foldChild({
+  update: (virtualListModel: VirtualList.Model, key: string) =>
+    VirtualList.scrollToKey(virtualListModel, key, { alignment: 'Center' }),
+  read: (model: Model) => Option.some(model.virtualListChatDemo),
+  write: (model, nextVirtualListChatDemo) =>
+    modifyFields(model, {
+      virtualListChatDemo: () => nextVirtualListChatDemo,
+    }),
+  toParentMessage: message =>
+    Message.GotVirtualListChatDemoMessage({ message }),
+})
+
+const VIRTUAL_LIST_CHAT_START_THRESHOLD_PX = 48
+const VIRTUAL_LIST_CHAT_HISTORY_BATCH_SIZE = 8
+
+const updateVirtualListChatMessages = (
+  model: Model,
+  nextMessages: ReadonlyArray<VirtualListChatMessage>,
+  nextId: number = model.virtualListChatNextId,
+): Update.Return<Model, Message> => {
+  const nextModel = modifyFields(model, {
+    virtualListChatMessages: () => nextMessages,
+    virtualListChatNextId: () => nextId,
+  })
+  return foldVirtualListChatItemsChanged(
+    nextModel,
+    Array.map(nextMessages, message => globalThis.String(message.id)),
+  )
+}
+
+const prependVirtualListChatMessages = (model: Model) => {
+  const firstId = pipe(
+    model.virtualListChatMessages,
+    Array.head,
+    Option.match({
+      onNone: () => model.virtualListChatNextId,
+      onSome: message => message.id,
+    }),
+  )
+  const olderMessages = Array.makeBy(
+    VIRTUAL_LIST_CHAT_HISTORY_BATCH_SIZE,
+    index => {
+      const id = firstId - VIRTUAL_LIST_CHAT_HISTORY_BATCH_SIZE + index
+      return {
+        id,
+        body: `Older message ${id} loaded above the viewport.`,
+        isExpanded: id % 3 === 0,
+      }
+    },
+  )
+  const nextMessages = [...olderMessages, ...model.virtualListChatMessages]
+  return updateVirtualListChatMessages(model, nextMessages)
+}
+
+const prependVirtualListChatMessagesOnStartThresholdEntry =
+  (scrollTop: number): Update.Step<Model, Message> =>
+  stepModel => {
+    const isNearStart = scrollTop <= VIRTUAL_LIST_CHAT_START_THRESHOLD_PX
+    const nextVirtualListChatStartProximity = isNearStart
+      ? VirtualListChatStartProximity.Near()
+      : VirtualListChatStartProximity.Away()
+    const nextModel = modifyFields(stepModel, {
+      virtualListChatStartProximity: () => nextVirtualListChatStartProximity,
+    })
+
+    if (
+      !isNearStart ||
+      stepModel.virtualListChatStartProximity._tag === 'Near'
+    ) {
+      return { model: nextModel }
+    }
+
+    return prependVirtualListChatMessages(nextModel)
+  }
 
 // UPDATE
 
@@ -1379,4 +1468,42 @@ export const update = (model: Model, message: Message) =>
         model,
         Math.floor(VIRTUAL_LIST_ROW_COUNT / 2),
       ),
+
+    GotVirtualListChatDemoMessage: ({ message }) =>
+      Match.value(message).pipe(
+        Match.withReturnType<Update.Return<Model, Message>>(),
+        Match.tag('ObservedContainerScroll', ({ scrollTop }) =>
+          Update.combine(model, [
+            foldVirtualListChatDemo(message),
+            prependVirtualListChatMessagesOnStartThresholdEntry(scrollTop),
+          ]),
+        ),
+        Match.orElse(() => foldVirtualListChatDemo(model, message)),
+      ),
+
+    ClickedVirtualListChatPrepend: () => prependVirtualListChatMessages(model),
+
+    ClickedVirtualListChatScrollToMessage: () =>
+      foldVirtualListChatScrollToKey(model, '7'),
+
+    ClickedVirtualListChatAppend: () => {
+      const nextId = model.virtualListChatNextId
+      const nextMessages = Array.append(model.virtualListChatMessages, {
+        id: nextId,
+        body: `New message ${nextId} arrived at the end.`,
+        isExpanded: nextId % 3 === 0,
+      })
+      return updateVirtualListChatMessages(model, nextMessages, nextId + 1)
+    },
+
+    ClickedVirtualListChatToggleMessage: ({ messageId }) => {
+      const nextMessages = Array.map(model.virtualListChatMessages, message =>
+        message.id === messageId
+          ? modifyFields(message, {
+              isExpanded: isExpanded => !isExpanded,
+            })
+          : message,
+      )
+      return updateVirtualListChatMessages(model, nextMessages)
+    },
   })

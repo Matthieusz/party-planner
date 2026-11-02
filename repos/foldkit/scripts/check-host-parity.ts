@@ -3,18 +3,6 @@ import { readFileSync } from 'node:fs'
 import { request } from 'node:http'
 import { resolve } from 'node:path'
 
-// The Vite dev host and the production example host answer the same requests.
-// They are different code (one is Vite middleware, the other
-// `scripts/serve.ts`) reading one test-only server entry, and they disagreed about HTTP
-// methods: Vite forwarded a POST and its body to `renderPage` while the
-// production host answered 405 before the entry ran. A form action or a
-// `Server.Responded` reply therefore worked all through development and failed
-// only once deployed.
-//
-// This gate composes the real hosts with that entry and requires their answers
-// to match. It separately proves the public example build contains and exposes
-// none of the routes that exist only to make parity observable.
-
 const EXAMPLE_DIR = resolve(process.cwd(), 'examples/ssr')
 const HOST_PARITY_CONFIG = resolve(
   process.cwd(),
@@ -729,6 +717,11 @@ const main = async (): Promise<void> => {
   await assertPortIsFree(NORMAL_BUILT_PORT)
 
   if (!isSkipBuild) {
+    runRequired('Building the Node adapter...', 'pnpm', [
+      '--filter',
+      '@foldkit/node',
+      'build',
+    ])
     runRequired('Building the example...', 'pnpm', ['build'])
   }
   assertNormalBundleHasNoParityMarkers()

@@ -1,5 +1,61 @@
 # create-foldkit-app
 
+## 0.41.0
+
+### Minor Changes
+
+- [#1852](https://github.com/foldkit/foldkit/pull/1852) [`af4b0bc`](https://github.com/foldkit/foldkit/commit/af4b0bc7b683ba7ccc2e6b789cdcca2f8ba4218e) Thanks [@devinjameson](https://github.com/devinjameson)! - Upgrade Foldkit and its companion packages to Effect 4.1. Published Effect dependencies and peer dependencies accept 4.1 patch releases through `~4.1.0` ranges. The workspace and new SPA, SSG, and SSR projects use the verified `4.1.0` release.
+
+  Update `effect` and every `@effect/*` runtime or test package in your app to a compatible 4.1 release together. Effect 4.1 replaces `Crypto.Crypto` with services in `effect/crypto`. For UUIDs, import `SecureRandom` from `effect/crypto`, acquire `SecureRandom.SecureRandom`, and call `secureRandom.uuidV4()`. Provide `BrowserCrypto.layerSecureRandom` or `NodeCrypto.layerSecureRandom`; UUID generation has no error channel and does not need `Effect.orDie`. Foldkit's Vite plugin, examples, scaffold guidance, and lint diagnostics use this API.
+
+  Effect minor upgrades are reviewed explicitly because they can change APIs. Patch releases within 4.1 are accepted without requiring a new Foldkit release.
+
+  The Node adapter, Vite plugin, and DevTools MCP server require Node.js 22.19.0 or newer, matching the Effect 4.1 Node platform packages. Upgrade Node.js before installing these packages on Node.js 20. The Node adapter explicitly constrains `@effect/platform-node-shared` to 4.1 as well, matching the CLI and Vite plugin, so npm can resolve the Node platform packages within the supported Effect minor.
+
+  Effect 4.1 starts `Stream.callback` setup immediately. For asynchronous Mount acquisition that must stop on unmount, pass `{ interruptible: true }` as the third argument to `Effect.acquireRelease` and construct the handle after the interruptible wait. The map example and chart integration guide use this option so unmounting during a library import does not construct a handle on a detached element.
+
+## 0.40.0
+
+### Minor Changes
+
+- [#1652](https://github.com/foldkit/foldkit/pull/1652) [`20ce739`](https://github.com/foldkit/foldkit/commit/20ce739c2dc620dba024380735165a8411fc5f7a) Thanks [@devinjameson](https://github.com/devinjameson)! - Scaffold Effect type-aware linting alongside the Foldkit Oxlint rules. Generated apps install compatible, pinned Effect and Oxlint integration versions and run both linters with `lint`.
+
+## 0.39.1
+
+### Patch Changes
+
+- [#1644](https://github.com/foldkit/foldkit/pull/1644) [`0cc0d50`](https://github.com/foldkit/foldkit/commit/0cc0d50dab9fc7757f495bd05ae70c4a10fd865c) Thanks [@devinjameson](https://github.com/devinjameson)! - Fresh SSR projects pin `@effect/platform-node-shared` to the same version as `effect` and `@effect/platform-node`, so npm can install their dependencies when newer Effect versions are available.
+
+## 0.39.0
+
+### Minor Changes
+
+- [#1584](https://github.com/foldkit/foldkit/pull/1584) [`fe2701c`](https://github.com/foldkit/foldkit/commit/fe2701c2fa4bb4370f59548006bcee5cc009575e) Thanks [@devinjameson](https://github.com/devinjameson)! - Render SSR and SSG documents from server-entry code. An `ssr.build` browser build now starts from a script and never emits an unrendered HTML template. The server entry's `renderDocument` receives the rendered application and the browser build's script, stylesheet, and module-preload URLs. Request-time rendering and prerendering use the same document renderer. `Server.renderDocument` supplies a complete document with application metadata, hydration markers, and unambiguous handoff structure.
+
+  **Migration:** add `ssr.clientEntry: '/src/entry.ts'`, import stylesheets from that client entry, and export `renderDocument = Server.renderDocument` from the server entry. Remove the source `index.html` and move additional document tags into a wrapper around `Server.renderDocument(application, assets, { head })`. `head` accepts trusted author-owned HTML, so escape any request-derived values before interpolating them. Remove `containerId` from SSR build and prerender options. Standalone `foldkitBuild` calls must pass `clientEntry` in their options. Build-time `transformIndexHtml` hooks no longer run; dev hooks still transform the rendered document. Use an absolute-path or full-URL Vite `base`; relative bases and relative or runtime `renderBuiltUrl` results are rejected. Upgrade Foldkit to 0.167.0 or newer alongside @foldkit/vite-plugin 0.27.0. The plugin requires the document-rendering APIs introduced in Foldkit 0.167.0.
+
+  An SSR build refuses an `index.html` already in the browser output before prerendering, including files copied from `publicDir`, emitted by another plugin, or left by an earlier build with `emptyOutDir` disabled. Remove those root documents so only a generated page can occupy `/`.
+
+  Custom template-based hosts can use `injectIntoTemplate`, `toResponse`, and `handleRequest` with a template. The template-based Vite dev host is available when `clientEntry` and `ssr.build` are omitted. Separate client-only builds and previews support Vite's relative-base behavior. SSR and SSG scaffolds use code-rendered documents and CSS imports.
+
+### Patch Changes
+
+- [#1586](https://github.com/foldkit/foldkit/pull/1586) [`2eb97fb`](https://github.com/foldkit/foldkit/commit/2eb97fb142a16b7a2ede2c49d50c49aa474c7d3a) Thanks [@devinjameson](https://github.com/devinjameson)! - Add a Node host adapter that serves Foldkit SSR builds from their manifest. New server-rendered projects use the adapter. Applications can use custom hosts for delivery policies outside its scope.
+
+## 0.38.0
+
+### Minor Changes
+
+- [#1425](https://github.com/foldkit/foldkit/pull/1425) [`9d701af`](https://github.com/foldkit/foldkit/commit/9d701af6a75161962a9600422743d7531c0e4828) Thanks [@rodygosset](https://github.com/rodygosset)! - Add experimental `Query` and `KeyedQuery` Submodels for fetched data that belongs in an application Model. Define the data and error Schemas together with the Effect that fetches the value, then embed the generated Model and Message in the parent. A Query holds one `AsyncData` value. A KeyedQuery holds one retained entry for each argument key, so revisiting data already loaded into the owning Model is a cache hit.
+
+  The parent still decides when work starts. `loadIfMissing` fetches only when no data is available, `revalidate` refreshes existing data, and `revalidateOrLoad` handles either state. Query tracks request generations, and `reset` preserves that history, so a late completion cannot settle work started after the reset. KeyedQuery's default key encoding canonicalizes object property order recursively. `read` returns the current `AsyncData`, `run` fetches data outside a Foldkit application, and `lift({ parentField, toParentMessage })` connects the Query to its parent.
+
+  Import Query from `foldkit/experimental` or `foldkit/experimental/query`. Create Foldkit App also includes `api-cache-query`, a complete example of list, detail, and interval-refreshed Queries.
+
+### Patch Changes
+
+- [#1534](https://github.com/foldkit/foldkit/pull/1534) [`0ec94a1`](https://github.com/foldkit/foldkit/commit/0ec94a178c504827060a5e475200599193b0387e) Thanks [@devinjameson](https://github.com/devinjameson)! - Protect Effect `Redacted` values across DevTools Model, Message, Command, Mount, init, and diff responses, including the Vite prebundle needed by consumers. Document the DevTools MCP trust boundary, the controls that disable dispatch or relay access, and why `excludeFromHistory` does not hide sensitive Model data.
+
 ## 0.37.0
 
 ### Minor Changes

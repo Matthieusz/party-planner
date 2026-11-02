@@ -62,6 +62,9 @@ const highlightLanguage = (filePath: string): string => {
   if (filePath.endsWith('.html')) {
     return 'html'
   }
+  if (filePath.endsWith('.txt')) {
+    return 'text'
+  }
   return 'typescript'
 }
 
@@ -87,6 +90,20 @@ const highlightCodePlugin = (): Plugin => ({
 
 const CSS_SNIPPETS_ID = 'virtual:css-snippets'
 const RESOLVED_CSS_SNIPPETS_ID = '\0' + CSS_SNIPPETS_ID
+
+type CssSnippetEntry = readonly [
+  string,
+  Readonly<{ raw: string; highlighted: string; language: string }>,
+]
+
+const cssSnippetEntry = (
+  fileName: string,
+  raw: string,
+  highlighted: string,
+): CssSnippetEntry => [
+  fileName.replace(/\.css$/, ''),
+  { raw, highlighted, language: 'css' },
+]
 
 /**
  * Highlights `src/snippet/*.css` and serves the results as one virtual module.
@@ -132,7 +149,7 @@ const cssSnippetsPlugin = (): Plugin => {
             themes: shikiThemes,
           })
 
-          return [fileName.replace(/\.css$/, ''), { raw, highlighted }] as const
+          return cssSnippetEntry(fileName, raw, highlighted)
         }),
       )
 

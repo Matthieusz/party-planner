@@ -49,7 +49,7 @@ Prior to this release, adding keyboard shortcuts to a Foldkit application was cu
 
 In 0.161.0, `Subscription.keyboardShortcuts` handles that work from a binding table:
 
-::Snippet{name="release0161KeyboardShortcuts" label="search and home shortcuts"}
+::Snippet{name="release0161KeyboardShortcuts" label="Search and home shortcuts"}
 
 `Mod` means Command on Apple platforms and Control elsewhere. An array describes an ordered sequence, so `['G', 'H']` means press G, then H. Incomplete sequences expire, and ambiguous bindings are rejected when the table is constructed.
 
@@ -65,7 +65,7 @@ To reliably stop a key press from scrolling the page, cancel its default action 
 
 0.160.0 added `Subscription.fromEventFilterMapPreventDefault`. When its `toMessage` callback returns `Option.some(message)`, the helper cancels the browser's default action and queues the Message before the listener returns. The Stream processes the Message after the event listener returns. Returning `Option.none()` leaves the default action alone. DragAndDrop now uses this helper so Tab does not move focus and Space and arrow keys do not scroll the page during a keyboard drag.
 
-The [DOM events guide](/core/subscriptions#dom-events) covers event filtering and default cancellation.
+The [DOM events guide](/core/subscriptions#browser-event-streams) covers event filtering and default cancellation.
 
 ## Initializing Submodels
 
@@ -73,13 +73,13 @@ Prior to this release, a parent's init function had to assemble child Submodels 
 
 Now, `Update.foldChildInit` keeps that work together. For example, a parent can initialize a Search Submodel and reuse the OutMessage fold it already calls from update:
 
-::Snippet{name="release0161ChildInit" label="folding a child boot result into its parent"}
+::Snippet{name="release0161ChildInit" label="Folding a child boot result into its parent"}
 
 `toParentModel` constructs the parent Model before the OutMessage handler runs. The helper lifts the child's Commands and includes any Commands the handler returns.
 
 For several sibling Submodels, `Update.foldChildInits` takes named results and their corresponding folds:
 
-::Snippet{name="release0161ChildInits" label="initializing Search and Editor Submodels together"}
+::Snippet{name="release0161ChildInits" label="Initializing Search and Editor Submodels together"}
 
 The parent Model is constructed once with both children. Each OutMessage handler receives the parent Model produced by the previous handler, so changes from Search's handler are still present when Editor's handler runs. Commands returned by the children and handlers still run independently.
 
@@ -113,11 +113,11 @@ DOM event helpers now infer that type from the target and event name.
 
 Before:
 
-::Snippet{name="release0161FromEventBefore" label="event types before 0.161.0"}
+::Snippet{name="release0161FromEventBefore" label="Event types before 0.161.0"}
 
 After:
 
-::Snippet{name="release0161FromEventAfter" label="inferred event types in 0.161.0"}
+::Snippet{name="release0161FromEventAfter" label="Inferred event types in 0.161.0"}
 
 Remove the old Event and Message type arguments from `fromEvent`, `fromEventFilterMap`, and `fromEventFilterMapPreventDefault`. Their named config types now take `<Target, Type, Message>` instead of `<Event, Message>`. Custom event targets can declare their event maps with `Subscription.TypedEventTarget`.
 

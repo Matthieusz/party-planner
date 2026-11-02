@@ -5,26 +5,16 @@ import { fileURLToPath } from 'node:url'
 import type { Plugin } from 'vite'
 
 import { canaryVersion } from '../../../scripts/lib/package-version.mjs'
+import {
+  publicWorkspacePackages,
+  readWorkspacePackages,
+} from '../../../scripts/lib/workspace-packages.mjs'
 import { runnableExampleSlugs } from '../src/page/example/meta.ts'
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url))
 const WEBSITE_ROOT = resolve(SCRIPT_DIRECTORY, '..')
+const REPO_ROOT = resolve(WEBSITE_ROOT, '../..')
 const EXAMPLES_DIRECTORY = resolve(WEBSITE_ROOT, '../../examples')
-// NOTE: Workspace packages whose `workspace:*` specs in example package.json files
-// are rewritten to the published version range before the playground installs
-// them in the WebContainer. Every Foldkit package an example can depend on
-// must be listed here, or its `workspace:*` spec leaks into the npm install
-// and the install fails.
-const WORKSPACE_PACKAGE_JSON_PATHS: Readonly<Record<string, string>> = {
-  foldkit: resolve(WEBSITE_ROOT, '../foldkit/package.json'),
-  '@foldkit/ui': resolve(WEBSITE_ROOT, '../ui/package.json'),
-  '@foldkit/devtools': resolve(WEBSITE_ROOT, '../devtools/package.json'),
-  '@foldkit/markdown': resolve(WEBSITE_ROOT, '../markdown/package.json'),
-  '@foldkit/vite-plugin': resolve(
-    WEBSITE_ROOT,
-    '../vite-plugin-foldkit/package.json',
-  ),
-}
 const TS_CONFIG_BASE_PATH = resolve(WEBSITE_ROOT, '../../tsconfig.base.json')
 
 const VIRTUAL_MODULE_ID = 'virtual:playground-files'
@@ -74,7 +64,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [tailwindcss(), foldkit()],
+  plugins: [tailwindcss(), foldkit({ devToolsMcpPort: false })],
 })
 `
 
@@ -99,6 +89,8 @@ type DependencySpec = Readonly<Record<string, string>>
 type PackageJson = Readonly<{
   dependencies?: DependencySpec
   devDependencies?: DependencySpec
+  optionalDependencies?: DependencySpec
+  peerDependencies?: DependencySpec
   overrides?: DependencySpec
   [key: string]: unknown
 }>
@@ -119,17 +111,25 @@ type TsConfig = Readonly<{
 const rewriteWorkspaceSpec =
   (versions: Readonly<Record<string, string>>) =>
   (name: string, specifier: string): string => {
-    if (specifier !== 'workspace:*') {
+    if (!specifier.startsWith('workspace:')) {
       return specifier
     }
-    return versions[name] ?? specifier
+
+    const version = versions[name]
+
+    if (version === undefined) {
+      throw new Error(
+        `[playground-files] ${name} uses ${specifier} but is not a public workspace package`,
+      )
+    }
+
+    return version
   }
 
-// NOTE: Rolldown 1.2.9's generated loader rejects its WASI binding because
-// both export `__napiBindingTarget`. WebContainers must use the last compatible
-// release until Rolldown publishes a matching loader and binding pair.
+// NOTE: WebContainer installs Rolldown's WASI binding in a separate project,
+// so playground overrides cannot constrain that binding's dependencies.
 export const PLAYGROUND_DEPENDENCY_OVERRIDES: DependencySpec = {
-  rolldown: '1.2.6',
+  rolldown: '1.2.16',
 }
 
 const versionForDeployment = (
@@ -185,6 +185,14 @@ const transformPackageJson = (
     dependencies: rewriteDependencyMap(packageJson.dependencies, rewrite),
     devDependencies: rewriteDependencyMap(
       filterToRuntimeDevDependencies(packageJson.devDependencies),
+      rewrite,
+    ),
+    optionalDependencies: rewriteDependencyMap(
+      packageJson.optionalDependencies,
+      rewrite,
+    ),
+    peerDependencies: rewriteDependencyMap(
+      packageJson.peerDependencies,
       rewrite,
     ),
   }
@@ -345,20 +353,11 @@ export const loadPlaygroundWorkspacePackageVersions = async (): Promise<
   Readonly<Record<string, string>>
 > => {
   const canaryCommit = process.env['VITE_FOLDKIT_CANARY_COMMIT']
-  const entries = await Promise.all(
-    Object.entries(WORKSPACE_PACKAGE_JSON_PATHS).map(
-      async ([name, packageJsonPath]) => {
-        const packageJson: { version: string } = JSON.parse(
-          await readFile(packageJsonPath, 'utf-8'),
-        )
-
-        return [
-          name,
-          versionForDeployment(packageJson.version, canaryCommit),
-        ] as const
-      },
-    ),
-  )
+  const packages = publicWorkspacePackages(readWorkspacePackages(REPO_ROOT))
+  const entries = packages.map<readonly [string, string]>(({ packageJson }) => [
+    packageJson.name,
+    versionForDeployment(packageJson.version, canaryCommit),
+  ])
   return Object.fromEntries(entries)
 }
 

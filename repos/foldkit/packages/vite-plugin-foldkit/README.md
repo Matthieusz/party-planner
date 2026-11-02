@@ -65,6 +65,54 @@ With this set, the dev server converts HTML page requests to Web `Request` value
 
 Vite retains ownership of configured proxy routes before Foldkit handles application requests. Vite's `server.cors` option applies to Vite-owned source modules, assets, and HMR. It does not add headers to application responses or answer their preflights. Preflight ownership follows `Access-Control-Request-Method`, so a preflight for an application `POST` reaches `renderPage` even when its path looks like an asset. An `OPTIONS` request without both `Origin` and `Access-Control-Request-Method` is not a preflight and also reaches `renderPage`. Define application CORS in `renderPage`, where development and the deployed host share one policy. Vite's `allowedHosts` check runs before proxy and application handling, including `OPTIONS` and methods the Web `Request` API cannot represent.
 
+## Server-rendered documents
+
+With `ssr.build`, the client input is a script and the server entry produces the complete HTML document. Configure the script beside the server entry:
+
+```typescript
+foldkit({
+  ssr: {
+    clientEntry: '/src/entry.ts',
+    serverEntry: '/src/entry.server.ts',
+    build: true,
+  },
+})
+```
+
+Import CSS from the client script. Export `renderDocument` alongside `renderPage` in the server entry:
+
+```typescript
+export const renderDocument = Server.renderDocument
+```
+
+`Server.renderDocument(application, assets, options)` assembles the document with the application's title, language, direction, canonical URL, and Open Graph URL. `assets` contains the emitted `entryScript`, ordered `stylesheets`, and `modulePreloads`. The plugin collects static imports and their CSS, leaves lazy imports to Vite's runtime, and supplies the same assets to request-time rendering and prerendering. The default document includes UTF-8 and viewport metadata. Wrap the helper to set a default `lang` or add trusted author-owned `head` markup, such as a favicon. Never interpolate unescaped request data into `head`.
+
+The client build starts from a script rather than HTML. `index.html` appears in the client output only when prerendering generates `/`. The build refuses an existing root document copied from `publicDir`, emitted by another plugin, or left by an earlier build when `emptyOutDir` is disabled. Remove the source `index.html` when migrating an SSR build, move its stylesheet links into client imports, and move document tags into `renderDocument`. Build-time `transformIndexHtml` hooks do not run with a script input. In development, Vite transforms the rendered document for HMR and dev HTML hooks. `containerId` belongs only to a template-based custom host and cannot be combined with `clientEntry`.
+
+Use a root-relative `clientEntry`, such as `/src/entry.ts`, and an absolute-path or full-URL Vite `base`. Relative bases (`''` and `'./'`) are rejected because their asset URLs would resolve differently on nested routes. `modulePreload` configuration and absolute `experimental.renderBuiltUrl` results apply to the generated document; relative and runtime `renderBuiltUrl` results are rejected.
+
+The standalone build plugin takes `foldkitBuild(serverEntry, { clientEntry, ...options })`. Omitting `clientEntry` and `ssr.build` selects the template-based development host for a custom build pipeline. Hosts that own an HTML template can use the lower-level `injectIntoTemplate`, `toResponse`, and `handleRequest(request, { template, renderPage })` APIs.
+
+## Foldkit package resolution
+
+Each module graph must load one Foldkit copy. The plugin configures Vite for that:
+
+- `resolve.dedupe` lists `foldkit`, `@foldkit/ui`, and `@foldkit/devtools`, each only when it resolves from the application root.
+- In server builds and in every server environment of the dev server, the plugin bundles those three packages, plus every installed package whose `dependencies` or `peerDependencies` include `foldkit` or an `@foldkit/*` package, such as `@foldkit/markdown`. The plugin lists them in `resolve.noExternal`, which Vite applies to every environment, and in `ssr.noExternal`. In a Node server environment of the dev server, these packages run through Vite's module runner instead of Node's own import. An explicit `ssr.external` or `resolve.external` entry still keeps a package external.
+- The plugin finds these packages by crawling from the application's `package.json`. It follows the application's `dependencies` and `devDependencies`, then the `dependencies` of each package it bundles, plus the `devDependencies` of a bundled package that is a private workspace package.
+- The plugin excludes `foldkit` from dependency pre-bundling in every environment, so the build id transform runs on it. It also pre-bundles the Effect entries Foldkit imports in every environment whose optimizer is enabled, for example a Cloudflare Worker environment, so Foldkit and the application share one Effect instance. Applications need no `optimizeDeps` settings for Foldkit.
+
+A package the crawl does not reach stays external. For example: a peer the application does not declare, or a package reached only through a package that does not depend on Foldkit. Such a package loads a second Foldkit copy from `node_modules` at runtime. Declare it in the application's `package.json`, or add it to `resolve.noExternal`, which Vite applies to every environment:
+
+```typescript
+export default defineConfig({
+  plugins: [foldkit()],
+  resolve: { noExternal: ['foldkit-component-library'] },
+})
+```
+
+Vitest copies each environment's `resolve.noExternal` into `server.deps.inline`. A Vitest config that includes `foldkit()` therefore also inlines the crawled packages in tests.
+
 ## Completed build metadata
 
 Deployment tools that run Vite in process can read `foldkit:build` through Vite's standard plugin `api` field. Await the full application build before reading:
@@ -155,19 +203,19 @@ To include the overlay in production, list `@foldkit/devtools` in regular `depen
 
 During development, the plugin starts a WebSocket relay for the [`@foldkit/devtools-mcp`](https://www.npmjs.com/package/@foldkit/devtools-mcp) server. Through the relay, an AI agent can inspect a running Foldkit app and dispatch Messages.
 
-By default, the relay uses the dev server's listener at `/__foldkit/devtools-mcp`. The plugin publishes its address to a registry private to your user, and the MCP server finds it by project. You do not need to coordinate a port between them. The registry lives under `XDG_RUNTIME_DIR` when that is set, or under the operating system's temporary directory. `FOLDKIT_DEVTOOLS_RELAY_DIRECTORY` selects another directory.
+By default, the relay listens at `/__foldkit/devtools-mcp` on its own loopback port. WebSocket handlers on the Vite dev server cannot close its connection. Each dev server publishes its relay's address to a private registry, so the MCP server can find it without a configured port.
 
-The relay follows Vite's `server.host` setting. If you expose the dev server with `--host`, a client still needs the random token in the published address to inspect a Model or dispatch a Message. The plugin will not publish that token into a registry directory owned by another user or readable by other users. It reports the problem in the console.
+The registry lives under `XDG_RUNTIME_DIR` when set, `~/.cache` on macOS and Linux, or the user's temporary directory on Windows. `FOLDKIT_DEVTOOLS_RELAY_DIRECTORY` selects another directory. On Windows, that directory must be a direct child of the user's temporary directory.
 
-In middleware mode, the relay uses a free loopback port because there is no HTTP server to share. It also uses a free loopback port for HTTPS dev servers, whose self-signed certificates the MCP server cannot verify. The plugin publishes these addresses for discovery in the same way.
+For automatic discovery, the relay publishes a random token with its address. The MCP client signs a connection challenge with the token and checks the relay's response before sending tool requests. The plugin refuses to publish the record if another user can read or replace the registry directory. It also rejects symlinks and junctions, checks directory ACLs on macOS, and uses PowerShell to check ownership, access rights, and reparse points on Windows. If the check fails, the plugin reports the problem in the console.
 
-To use a fixed port, set `devToolsMcpPort` in your Vite config:
+An agent on another host cannot reach the automatic loopback relay. To connect from another host, or when the registry check fails, set a fixed port in your Vite config:
 
 ```typescript
 plugins: [foldkit({ devToolsMcpPort: 9988 })]
 ```
 
-Set `FOLDKIT_DEVTOOLS_MCP_PORT` to the same value for the MCP server. A fixed port opens a separate socket on every interface and does not require a token. Use this setting on platforms where directory ownership cannot be verified, including Windows, because the plugin cannot publish a relay address there.
+Set `FOLDKIT_DEVTOOLS_MCP_PORT` to the same value for the MCP server. If the agent runs elsewhere, also set `FOLDKIT_DEVTOOLS_MCP_HOST` to the dev server's host. A fixed port listens on every interface without a token. Do not use it on a shared or untrusted network.
 
 `devToolsMcpPort: false` disables the relay. The relay does not start during Vitest runs or in production builds.
 

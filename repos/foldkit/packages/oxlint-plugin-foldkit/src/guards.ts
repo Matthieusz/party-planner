@@ -279,6 +279,8 @@ export const resolveImportedPath = (
 
 const foldkitNamespaceBySource: Readonly<Record<string, string>> = {
   'foldkit/command': 'Command',
+  'foldkit/experimental': 'Experimental',
+  'foldkit/experimental/query': 'Query',
   'foldkit/html': 'Html',
   'foldkit/managedResource': 'ManagedResource',
   'foldkit/message': 'Message',
@@ -290,6 +292,7 @@ const foldkitNamespaceBySource: Readonly<Record<string, string>> = {
   'foldkit/struct': 'Struct',
   'foldkit/submodel': 'Submodel',
   'foldkit/subscription': 'Subscription',
+  'foldkit/update': 'Update',
 }
 
 export const resolveFoldkitApiPath = (

@@ -4,6 +4,8 @@
 
 Calendar provides the state machine, ARIA wiring, and derived data for an inline calendar. You provide the markup and styling through `toView`. Use it in scheduling interfaces and event calendars, or as the calendar inside a date picker.
 
+### Three Calendar Views
+
 The Calendar moves among three grids:
 
 - **Days:** a fixed 6×7 grid with locale-aware weekday headings.
@@ -11,6 +13,8 @@ The Calendar moves among three grids:
 - **Years:** 12 cells for choosing a year, arranged in three columns and paged in 12-year windows.
 
 The heading moves from Days to Months, then from Months to Years. Selecting a year returns to Months for that year. Selecting a month returns to Days for that month.
+
+### State Ownership
 
 Calendar owns navigation state, including the visible month, active grid, and keyboard cursor. The parent owns the selected date. This keeps the domain value in the parent Model while Calendar handles the interaction state around it.
 
@@ -30,11 +34,13 @@ This Calendar highlights today and lets the parent store a selected date. Click 
 
 ::Demo{name="basic"}
 
-::Snippet{name="uiCalendarBasic" label="basic calendar example"}
+::Snippet{name="uiCalendarBasic" label="Basic calendar"}
 
 ## Render and Style the Calendar {#styling}
 
 Calendar is headless. Its `toView` callback receives attribute groups for the current mode. Spread those attributes onto your elements, then add your own classes and structure.
+
+### Style Calendar State
 
 State data attributes let styles follow Calendar state without rebuilding that logic in the view:
 
@@ -73,95 +79,21 @@ Rows use `role="row"`. Weekday headings use `role="columnheader"`. Cells use `ro
 
 Two inputs cover a localized calendar, and they belong to different layers.
 
+### Locale Data
+
 The `LocaleConfig` you pass to `init` carries the words and the ordering: month names, day names, the first day of the week, and a format for each shape the Calendar renders. A `DateFormat` is a non-empty ordered list of parts, so a locale that reads day-first or year-first renders correctly without a code change. `MonthYearFormat` is the same idea restricted to month, year, and literal parts.
 
-```ts
-const germanLocale: Calendar.LocaleConfig = {
-  firstDayOfWeek: 'Monday',
-  monthNames: [
-    'Januar',
-    'Februar',
-    'März',
-    'April',
-    'Mai',
-    'Juni',
-    'Juli',
-    'August',
-    'September',
-    'Oktober',
-    'November',
-    'Dezember',
-  ],
-  shortMonthNames: [
-    'Jan.',
-    'Feb.',
-    'März',
-    'Apr.',
-    'Mai',
-    'Juni',
-    'Juli',
-    'Aug.',
-    'Sept.',
-    'Okt.',
-    'Nov.',
-    'Dez.',
-  ],
-  dayNames: [
-    'Sonntag',
-    'Montag',
-    'Dienstag',
-    'Mittwoch',
-    'Donnerstag',
-    'Freitag',
-    'Samstag',
-  ],
-  shortDayNames: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
-  longFormat: [
-    Calendar.DatePart.DayNumber(),
-    Calendar.DatePart.LiteralText({ text: '. ' }),
-    Calendar.DatePart.MonthName(),
-    Calendar.DatePart.LiteralText({ text: ' ' }),
-    Calendar.DatePart.YearNumber(),
-  ],
-  shortFormat: [
-    Calendar.DatePart.DayNumber(),
-    Calendar.DatePart.LiteralText({ text: '. ' }),
-    Calendar.DatePart.ShortMonthName(),
-    Calendar.DatePart.LiteralText({ text: ' ' }),
-    Calendar.DatePart.YearNumber(),
-  ],
-  ariaLabelFormat: [
-    Calendar.DatePart.DayName(),
-    Calendar.DatePart.LiteralText({ text: ', ' }),
-    Calendar.DatePart.DayNumber(),
-    Calendar.DatePart.LiteralText({ text: '. ' }),
-    Calendar.DatePart.MonthName(),
-    Calendar.DatePart.LiteralText({ text: ' ' }),
-    Calendar.DatePart.YearNumber(),
-  ],
-  monthYearFormat: [
-    Calendar.DatePart.MonthName(),
-    Calendar.DatePart.LiteralText({ text: ' ' }),
-    Calendar.DatePart.YearNumber(),
-  ],
-}
-```
+::Snippet{name="uiCalendarGermanLocale" label="German Calendar locale"}
 
 Every field is required, and none of them fall back to anything. Spreading `defaultEnglishLocale` and overriding a few fields is convenient, but whatever you leave out stays English, so a locale that sets `monthNames` and `longFormat` alone still renders English abbreviations in the months grid and an English-ordered date in every day cell's accessible name.
 
+### View Copy
+
 The component's own chrome is the other half: the words the Calendar wraps around dates, such as "Calendar" on the grid and "Week of" on each row. Those are view copy rather than locale data, so they come from `ViewInputs`. The date-dependent labels have `to*Label` callbacks, while navigation and mode-switch labels accept strings directly. All have English defaults. DatePicker accepts these same fields and forwards them to its embedded Calendar.
 
-```ts
-viewInputs: {
-  previousMonthLabel: 'Vorheriger Monat',
-  toDaysGridLabel: monthYear => `Kalender, ${monthYear}`,
-  toWeekLabel: weekStart =>
-    `Woche ab ${Calendar.formatLong(weekStart, germanLocale)}`,
-  toMonthsGridLabel: year => `Monatsauswahl, ${year}`,
-  toYearsGridLabel: (startYear, endYear) =>
-    `Jahresauswahl, ${startYear}–${endYear}`,
-}
-```
+::Snippet{name="uiCalendarGermanViewInputs" label="German Calendar labels"}
+
+### Available Locales
 
 Foldkit ships `defaultEnglishLocale` and nothing else. Supply the locale data your app needs, or derive it from `Intl` at the app boundary.
 

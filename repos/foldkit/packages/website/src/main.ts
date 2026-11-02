@@ -19,6 +19,7 @@ import {
   Update,
 } from 'foldkit'
 import { UrlRequest, load, pushUrl } from 'foldkit/navigation'
+import { Transition } from 'foldkit/route'
 import { modifyFields } from 'foldkit/struct'
 import { Url, toString as urlToString } from 'foldkit/url'
 import { githubStarCount } from 'virtual:landing-data'
@@ -61,6 +62,7 @@ import {
   SidebarStateJsonString,
 } from './sidebarStorage'
 import * as SnippetCopy from './snippetCopy'
+import * as SnippetDisclosure from './snippetDisclosure'
 import * as Subscriptions from './subscription'
 import { ThemeSelector } from './view'
 
@@ -222,6 +224,7 @@ export const init: Runtime.RoutingApplicationInit<
   )
   const searchInit = Search.init()
   const snippetCopyInit = SnippetCopy.init()
+  const snippetDisclosureInit = SnippetDisclosure.init()
   const coreSubmodelPageInit = Core.SubmodelPage.init()
 
   const maybeInitialActiveSectionKey = findActiveSectionKey(
@@ -254,8 +257,10 @@ export const init: Runtime.RoutingApplicationInit<
         url,
         deployment: flags.deployment,
         snippetCopy: snippetCopyInit.model,
+        snippetDisclosure: snippetDisclosureInit.model,
         maybeGitHubStarCount: Option.fromNullishOr(githubStarCount),
         currentYear: flags.currentYear,
+        newsletterEmail: '',
         mobileMenuDialog: Dialog.init({ id: 'mobile-menu' }),
         isMobileTableOfContentsOpen: false,
         activeSection: Option.none(),
@@ -425,6 +430,16 @@ const foldSnippetCopy = Update.foldChild({
   toParentMessage: message => Message.GotSnippetCopyMessage({ message }),
 })
 
+const foldSnippetDisclosure = Update.foldChild({
+  update: SnippetDisclosure.update,
+  read: (model: Model) => Option.some(model.snippetDisclosure),
+  write: (model, nextSnippetDisclosure) =>
+    modifyFields(model, {
+      snippetDisclosure: () => nextSnippetDisclosure,
+    }),
+  toParentMessage: message => Message.GotSnippetDisclosureMessage({ message }),
+})
+
 const foldCoreSubmodelPage = Update.foldChild({
   update: Core.SubmodelPage.update,
   read: (model: Model) => Option.some(model.coreSubmodelPage),
@@ -449,6 +464,11 @@ const foldHomeOutMessage = (outMessage: Home.OutMessage) =>
         model,
         commands: [LoadPlayground({ exampleSlug })],
       }),
+    UpdatedNewsletterEmail:
+      ({ value }) =>
+      model => ({
+        model: modifyFields(model, { newsletterEmail: () => value }),
+      }),
   })
 
 const foldHome = Update.foldChild({
@@ -459,22 +479,26 @@ const foldHome = Update.foldChild({
   foldOutMessage: foldHomeOutMessage,
 })
 
-const reconcileHomePresence =
-  (route: AppRoute): UpdateStep =>
-  model =>
-    Match.value(route).pipe(
-      Match.withReturnType<ReturnType<UpdateStep>>(),
-      Match.tag('Home', () => {
-        const nextHome = Option.orElse(model.maybeHome, () =>
-          Option.some(Home.init().model),
-        )
+const keepModel: UpdateStep = model => ({ model })
 
-        return { model: modifyFields(model, { maybeHome: () => nextHome }) }
+const reconcileHomePresence = (
+  transition: Transition.Transition<AppRoute>,
+): UpdateStep =>
+  Transition.matchOrElse<UpdateStep>()(
+    transition,
+    'Home',
+    {
+      Entered: () => model => ({
+        model: modifyFields(model, {
+          maybeHome: () => Option.some(Home.init().model),
+        }),
       }),
-      Match.orElse(() => ({
+      Exited: () => model => ({
         model: modifyFields(model, { maybeHome: () => Option.none() }),
-      })),
-    )
+      }),
+    },
+    () => keepModel,
+  )
 
 const foldComingFromReact = Update.foldChild({
   update: ComingFromReact.update,
@@ -619,6 +643,7 @@ export const update = (model: Model, message: Message) =>
 
     ChangedUrl: ({ url }) => {
       const nextRoute = urlToAppRoute(url)
+      const transition = Transition.make(model.route, nextRoute)
 
       const maybeNextExampleSlug = pipe(
         nextRoute,
@@ -686,7 +711,7 @@ export const update = (model: Model, message: Message) =>
 
       return Update.combine(model, [
         writeRouteFields,
-        reconcileHomePresence(nextRoute),
+        reconcileHomePresence(transition),
         foldMobileMenuDialogClose,
         foldThemeMenuClose,
         foldSearchRouteChanged,
@@ -724,6 +749,9 @@ export const update = (model: Model, message: Message) =>
 
     GotSnippetCopyMessage: ({ message }) => foldSnippetCopy(model, message),
 
+    GotSnippetDisclosureMessage: ({ message }) =>
+      foldSnippetDisclosure(model, message),
+
     GotCoreSubmodelPageMessage: ({ message }) =>
       foldCoreSubmodelPage(model, message),
 
@@ -742,6 +770,10 @@ export const update = (model: Model, message: Message) =>
       model: modifyFields(model, {
         activeSection: () => Option.some(sectionId),
       }),
+    }),
+
+    UpdatedNewsletterEmail: ({ value }) => ({
+      model: modifyFields(model, { newsletterEmail: () => value }),
     }),
 
     ChangedViewportWidth: ({ isNarrow }) => ({
@@ -1024,25 +1056,16 @@ export const LoadPlayground = Command.define('LoadPlayground', {
 
 // SUBSCRIPTION
 
-const homeSubscriptions = Subscription.lift(Home.subscriptions)<Model, Message>(
-  {
-    toChildModel: model => Option.getOrThrow(model.maybeHome),
-    toParentMessage: toGotHomeMessage,
-    when: model => Option.isSome(model.maybeHome),
-  },
-)
-
 const uiPagesSubscriptions = Subscription.lift(Ui.subscriptions)<
   Model,
   Message
 >({
-  toChildModel: model => model.uiPages,
+  read: model => Option.some(model.uiPages),
   toParentMessage: message => Message.GotUiPageMessage({ message }),
 })
 
 export const subscriptions = Subscription.aggregate(
   Subscriptions.ActiveSection.subscriptions,
-  homeSubscriptions,
   uiPagesSubscriptions,
   Subscriptions.SearchShortcut.subscriptions,
   Subscriptions.SystemTheme.subscriptions,
@@ -1054,7 +1077,7 @@ export const subscriptions = Subscription.aggregate(
 const playgroundManagedResources = ManagedResource.lift(
   Playground.managedResources,
 )<Model, Message>({
-  toChildModel: model =>
+  read: model =>
     Option.filter(model.playground, () =>
       Option.contains(model.maybeIsPlaygroundSupported, true),
     ),
@@ -1065,7 +1088,7 @@ const homeManagedResources = ManagedResource.lift(Home.managedResources)<
   Model,
   Message
 >({
-  toChildModel: model => model.maybeHome,
+  read: model => model.maybeHome,
   toParentMessage: toGotHomeMessage,
 })
 

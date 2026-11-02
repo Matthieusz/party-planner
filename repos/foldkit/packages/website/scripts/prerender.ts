@@ -104,6 +104,7 @@ export const STATIC_ROUTES: ReadonlyArray<AppRoute> = [
   AppRoute.CoreRender(),
   AppRoute.CoreFile(),
   AppRoute.CoreHttp(),
+  AppRoute.CoreQuery(),
   AppRoute.CoreCanvas(),
   AppRoute.CoreRuntime(),
   AppRoute.CoreServerRendering(),
@@ -303,8 +304,8 @@ const readApiModules = Effect.gen(function* () {
     fs.readFileString(API_JSON_PATH),
     fs.readFileString(API_UI_JSON_PATH),
   ])
-  const coreApiDoc = yield* Schema.decodeUnknownEffect(ApiDocJson)(coreRaw)
-  const uiApiDoc = yield* Schema.decodeUnknownEffect(ApiDocJson)(uiRaw)
+  const coreApiDoc = yield* Schema.decodeEffect(ApiDocJson)(coreRaw)
+  const uiApiDoc = yield* Schema.decodeEffect(ApiDocJson)(uiRaw)
 
   return parseTypedocJson({
     ...coreApiDoc,

@@ -1,5 +1,49 @@
 # @foldkit/devtools-mcp
 
+## 0.26.0
+
+### Minor Changes
+
+- [#1852](https://github.com/foldkit/foldkit/pull/1852) [`af4b0bc`](https://github.com/foldkit/foldkit/commit/af4b0bc7b683ba7ccc2e6b789cdcca2f8ba4218e) Thanks [@devinjameson](https://github.com/devinjameson)! - Upgrade Foldkit and its companion packages to Effect 4.1. Published Effect dependencies and peer dependencies accept 4.1 patch releases through `~4.1.0` ranges. The workspace and new SPA, SSG, and SSR projects use the verified `4.1.0` release.
+
+  Update `effect` and every `@effect/*` runtime or test package in your app to a compatible 4.1 release together. Effect 4.1 replaces `Crypto.Crypto` with services in `effect/crypto`. For UUIDs, import `SecureRandom` from `effect/crypto`, acquire `SecureRandom.SecureRandom`, and call `secureRandom.uuidV4()`. Provide `BrowserCrypto.layerSecureRandom` or `NodeCrypto.layerSecureRandom`; UUID generation has no error channel and does not need `Effect.orDie`. Foldkit's Vite plugin, examples, scaffold guidance, and lint diagnostics use this API.
+
+  Effect minor upgrades are reviewed explicitly because they can change APIs. Patch releases within 4.1 are accepted without requiring a new Foldkit release.
+
+  The Node adapter, Vite plugin, and DevTools MCP server require Node.js 22.19.0 or newer, matching the Effect 4.1 Node platform packages. Upgrade Node.js before installing these packages on Node.js 20. The Node adapter explicitly constrains `@effect/platform-node-shared` to 4.1 as well, matching the CLI and Vite plugin, so npm can resolve the Node platform packages within the supported Effect minor.
+
+  Effect 4.1 starts `Stream.callback` setup immediately. For asynchronous Mount acquisition that must stop on unmount, pass `{ interruptible: true }` as the third argument to `Effect.acquireRelease` and construct the handle after the interruptible wait. The map example and chart integration guide use this option so unmounting during a library import does not construct a handle on a detached element.
+
+## 0.25.0
+
+### Minor Changes
+
+- [#1535](https://github.com/foldkit/foldkit/pull/1535) [`2b17b02`](https://github.com/foldkit/foldkit/commit/2b17b02abfeb530eab689bf2d5a95d34540b7a6a) Thanks [@filipfalcon](https://github.com/filipfalcon)! - By default, the DevTools MCP relay now uses its own loopback port. Other Vite plugins and WebSocket proxies can handle upgrades on the dev server without closing the MCP connection. The MCP server also connects when a tool is called, so an agent can start before the dev server and reach it on the next call.
+
+  One agent session can now inspect several running Foldkit applications:
+
+  - Each dev server publishes a separate registry record. Stopping one server removes only its record.
+  - The MCP server finds every dev server under the agent's project root. If there are none, it finds the servers at the nearest enclosing root. It compares real paths, so a session started in a subdirectory or through a symlink finds its application.
+  - `foldkit_list_runtimes` includes each Runtime's `projectRoot`. Without `runtime_id`, a tool targets the most recently connected Runtime of the most recently started dev server.
+  - A closed browser tab disappears from the Runtime list. A request for a Runtime that no relay lists returns an error without waiting for the request timeout.
+  - Concurrent tool calls share a registry lookup. Cancelling one call does not cancel discovery for the others. Closing the MCP session releases its relay connections.
+
+  Automatic discovery now checks the registry directory before either package uses it. Both reject directories that another user can read, write, or replace, as well as symlinks and junctions. On macOS they also check directory ACLs. On Windows they check ownership, access rights, and reparse points through PowerShell; the registry must be a private direct child of the user's temporary directory. Registry records are created exclusively. The MCP client authenticates a discovered relay with a signed challenge and verifies its response before sending a tool request.
+
+  ### Upgrading
+  - The automatic relay no longer follows Vite's `server.host`. To connect from another host, configure `devToolsMcpPort` in Vite and set `FOLDKIT_DEVTOOLS_MCP_PORT` and `FOLDKIT_DEVTOOLS_MCP_HOST` for the MCP server. A fixed port listens on every interface without a token. Do not use it on a shared or untrusted network.
+  - Setting either `FOLDKIT_DEVTOOLS_MCP_HOST` or `FOLDKIT_DEVTOOLS_MCP_PORT` now selects a fixed address and skips discovery. A host set without a port uses `9988`. Automatic discovery no longer falls back to that port.
+  - Upgrade the MCP server and Vite plugin together. The new MCP server requires a discovered relay to prove its identity, which an older plugin cannot do.
+  - When `XDG_RUNTIME_DIR` is unset on macOS or Linux, the default registry moves to `~/.cache/foldkit-devtools-relays`. Upgrade both packages together, or set `FOLDKIT_DEVTOOLS_RELAY_DIRECTORY` to the same private directory in both processes.
+
+  `devToolsMcpPort`, the registry record format, and the tool inputs are unchanged.
+
+## 0.24.1
+
+### Patch Changes
+
+- [#1534](https://github.com/foldkit/foldkit/pull/1534) [`0ec94a1`](https://github.com/foldkit/foldkit/commit/0ec94a178c504827060a5e475200599193b0387e) Thanks [@devinjameson](https://github.com/devinjameson)! - Protect Effect `Redacted` values across DevTools Model, Message, Command, Mount, init, and diff responses, including the Vite prebundle needed by consumers. Document the DevTools MCP trust boundary, the controls that disable dispatch or relay access, and why `excludeFromHistory` does not hide sensitive Model data.
+
 ## 0.24.0
 
 ### Minor Changes

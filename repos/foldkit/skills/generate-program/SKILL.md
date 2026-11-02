@@ -161,7 +161,7 @@ If the app uses UI components, **always read the ui-showcase example first** to 
 - `${CLAUDE_SKILL_DIR}/../../examples/ui-showcase/src/ui/message.ts`: how component Messages are structured
 - `${CLAUDE_SKILL_DIR}/../../examples/ui-showcase/src/ui/model.ts`: how component Models are composed
 - `${CLAUDE_SKILL_DIR}/../../examples/ui-showcase/src/ui/update.ts`: how component updates are delegated
-- `${CLAUDE_SKILL_DIR}/../../examples/ui-showcase/src/ui/subscriptions.ts`: which components need Subscriptions lifted into the parent (`DragAndDrop`, `Slider`, `VirtualList`)
+- `${CLAUDE_SKILL_DIR}/../../examples/ui-showcase/src/ui/subscriptions.ts`: which components need Subscriptions lifted into the parent (`DragAndDrop`, `Slider`)
 - `${CLAUDE_SKILL_DIR}/../../examples/ui-showcase/src/ui/toast.ts`: read when using `Toast`. It's unique in that it's parameterized on a payload schema via `Toast.make(PayloadSchema)`, returning a typed module you import from
 
 Directory names under `examples/ui-showcase/src/` have moved before. List the directory rather than trusting these paths blind.
@@ -347,7 +347,7 @@ For each Foldkit module you plan to use, read the `.d.ts` at the paths below. Re
 <project>/node_modules/foldkit/dist/command/index.d.ts  # Command.define: config object with args/messages/interrupt/execute. Command.mapMessages for parent<-child mapping
 <project>/node_modules/foldkit/dist/asyncData/public.d.ts # AsyncData: Idle/Loading/Refreshing/Failure/Stale/Success + Schema, match, isPending, hasData, revalidate
 <project>/node_modules/foldkit/dist/http/public.d.ts     # Http.layer: provide it to Commands that use HttpClient
-<project>/node_modules/foldkit/dist/dom/index.d.ts      # focus, advanceFocus, scrollIntoView, showDialog, closeDialog, clickElement, lockScroll, unlockScroll, inertOthers, restoreInert, detectElementMovement, waitForAnimationSettled. For time/random/delay use Effect's Clock, Random, Effect.sleep + Duration directly. For UUIDs use Crypto.Crypto's randomUUIDv4 with BrowserCrypto.layer.
+<project>/node_modules/foldkit/dist/dom/index.d.ts      # focus, advanceFocus, scrollIntoView, showDialog, closeDialog, clickElement, lockScroll, unlockScroll, inertOthers, restoreInert, detectElementMovement, waitForAnimationSettled. For time/random/delay use Effect's Clock, Random, Effect.sleep + Duration directly. For UUIDs use SecureRandom.SecureRandom's uuidV4() with BrowserCrypto.layerSecureRandom.
 
 # If using subscriptions
 <project>/node_modules/foldkit/dist/subscription/index.d.ts # Subscription.make<Model, Message>, Subscription.lift, Subscription.aggregate
@@ -525,7 +525,7 @@ Every message must carry meaning. No `NoOp`.
 - Factory functions named by action: `fetchWeather`, not `fetchWeatherCommand`
 - Name each Command for the effect its `execute` body performs, not the later Model transition caused when update handles its result. A timer that only waits before update starts a dismissal is `WaitBeforeDismissal`, not `DismissAfter`
 - Commands that can't meaningfully fail return `Completed*` Messages named from the Command, payload-carrying ones included: `DetermineStartTime` → `CompletedDetermineStartTime`, not `DeterminedStartTime`
-- Use Foldkit's `Dom` module for DOM operations (`Dom.focus`, `Dom.scrollIntoView`, `Dom.showDialog`, `Dom.lockScroll`, etc.) and Effect built-ins for everything else (`Clock.currentTimeMillis`, `Random.nextIntBetween`, `Effect.sleep(Duration.millis(...))`). For UUIDs, use the `Crypto.Crypto` service's `randomUUIDv4` with a platform Crypto layer. See DOM and Effect Helpers in [architecture.md](architecture.md)
+- Use Foldkit's `Dom` module for DOM operations (`Dom.focus`, `Dom.scrollIntoView`, `Dom.showDialog`, `Dom.lockScroll`, etc.) and Effect built-ins for everything else (`Clock.currentTimeMillis`, `Random.nextIntBetween`, `Effect.sleep(Duration.millis(...))`). For UUIDs, import `SecureRandom` from `effect/crypto` and use its `SecureRandom` service's `uuidV4()` with the platform SecureRandom layer. See DOM and Effect Helpers in [architecture.md](architecture.md)
 - For HTTP requests, use `HttpClient` and `HttpClientRequest` from `effect/http`, and provide the client with `Effect.provide(effect, Http.layer)` where `Http` comes from `foldkit`. See `examples/weather/src/main.ts` for the pattern
 - Let `Update.foldChildInit`, `Update.foldChildInits`, `Update.foldChild`, or `Update.foldChildStep` re-tag a child Submodel's Commands through `toParentMessage` when applicable. Use `Command.mapMessages` directly only for lower-level helpers or route-gated initialization
 
@@ -621,7 +621,7 @@ For file uploads (resumes, images, attachments):
 - `dependenciesToStream` builds `Stream<Message>` from dependencies
 - Subscriptions auto-start/stop based on Model state. Never manually managed
 - For Subscriptions with no Model dependencies (always active), pass `{}` as the `entry` fields argument and return `{}` from `modelToDependencies`
-- To embed child Subscriptions, use `Subscription.lift(childRecord)<Parent, Parent>({ toChildModel, toParentMessage })`. Add `when` on the parent's lift call to gate on a parent fact the child cannot see (the route a page Submodel sits behind); the parent owns the gate and reads the parent Model, and a closed gate tears the entry's Stream down. `when: parentModel => boolean` gates every entry; `when: { entryName: parentModel => boolean }` gates only the entries it names, so a child never splits its record to suit its parent's gating. To combine multiple records, use `Subscription.aggregate(...records)`, which reads the Model, Message, and any Effect services off the records
+- To embed child Subscriptions, use `Subscription.lift(childRecord)<Parent, Parent>({ read, toParentMessage })`. Its `read` returns `Option<ChildModel>`, matching `Update.foldChild` and `ManagedResource.lift`; `None` stops every child Stream without reading child dependencies. Use `Option.some` for always-present children. Every lifted entry wraps its dependencies in `GatedDependencies`. Add `when` on the parent's lift call to gate on a parent fact the child cannot see (the route a page Submodel sits behind); the parent owns the gate and reads the parent Model, and a closed gate tears the entry's Stream down. `when: parentModel => boolean` gates every entry; `when: { entryName: parentModel => boolean }` adds a condition only to the entries it names; child absence still stops every entry, so a child never splits its record to suit its parent's gating. To combine multiple records, use `Subscription.aggregate(...records)`, which reads the Model, Message, and any Effect services off the records
 
 ### Managed Resources (if stateful runtime handles)
 
@@ -629,7 +629,7 @@ For file uploads (resumes, images, attachments):
 - `modelToMaybeRequirements` returns `Option.some(params)` to acquire (or re-acquire when params change) and `Option.none()` to release. Resources auto-acquire/release on Model state, like Subscriptions
 - For a resource with no params, use `Schema.Option(Schema.Null)` and return `Option.some(null)`
 - Read the service union with `ManagedResource.ServicesOf<typeof managedResources>`
-- To embed a child Submodel's resources, use `ManagedResource.lift(childRecord)<Parent, Parent>({ toChildModel, toParentMessage })` (its `toChildModel` returns `Option<ChildModel>`, so lifted requirements must be `Schema.Option`-wrapped). Combine records with `ManagedResource.aggregate(...records)`, which reads the Model and Message off the records
+- To embed a child Submodel's resources, use `ManagedResource.lift(childRecord)<Parent, Parent>({ read, toParentMessage })` (its `read` returns `Option<ChildModel>`, so lifted requirements must be `Schema.Option`-wrapped). Combine records with `ManagedResource.aggregate(...records)`, which reads the Model and Message off the records
 - App-lifetime handles go in `resources`, not here; there is no `persistent`
 
 ## Phase 4.5: Self-check before verification
@@ -693,6 +693,8 @@ Write `story` pipelines covering:
 - **Error path**: every fallible Command resolved with its `Failed*` Message
 - **Multi-step interaction**: at least one test that chains multiple Messages and Command resolutions
 - **Edge cases**: empty states, boundary conditions, ignored inputs (e.g. stale results, duplicate submissions)
+
+Check an `@foldkit/ui` component's `test` namespace before writing resolvers for its Commands. For example, use `Toast.test.drainEntry({ entryId })` for a newly shown toast that auto-dismisses.
 
 **Scene tests** (`scene.test.ts`) test through the rendered view. You interact with elements by accessible locators (role, label, text) and assert on what the user sees. A `scene.test.ts` is **REQUIRED** for Tier 3+ apps. The review loop treats its absence as a BLOCKER, not a QUALITY item. No exceptions. Don't "defer" this. Study these exemplars:
 

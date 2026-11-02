@@ -61,8 +61,21 @@ declare module '*.sh?highlighted' {
   export default html
 }
 
+declare module '*.txt?raw' {
+  const content: string
+  export default content
+}
+
+declare module '*.txt?highlighted' {
+  const html: string
+  export default html
+}
+
 declare module 'virtual:css-snippets' {
-  const snippets: Record<string, { raw: string; highlighted: string }>
+  const snippets: Record<
+    string,
+    { raw: string; highlighted: string; language: string }
+  >
   export default snippets
 }
 

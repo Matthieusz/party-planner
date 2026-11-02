@@ -1,5 +1,79 @@
 # @foldkit/ui
 
+## 0.170.0
+
+### Minor Changes
+
+- [#1852](https://github.com/foldkit/foldkit/pull/1852) [`af4b0bc`](https://github.com/foldkit/foldkit/commit/af4b0bc7b683ba7ccc2e6b789cdcca2f8ba4218e) Thanks [@devinjameson](https://github.com/devinjameson)! - Upgrade Foldkit and its companion packages to Effect 4.1. Published Effect dependencies and peer dependencies accept 4.1 patch releases through `~4.1.0` ranges. The workspace and new SPA, SSG, and SSR projects use the verified `4.1.0` release.
+
+  Update `effect` and every `@effect/*` runtime or test package in your app to a compatible 4.1 release together. Effect 4.1 replaces `Crypto.Crypto` with services in `effect/crypto`. For UUIDs, import `SecureRandom` from `effect/crypto`, acquire `SecureRandom.SecureRandom`, and call `secureRandom.uuidV4()`. Provide `BrowserCrypto.layerSecureRandom` or `NodeCrypto.layerSecureRandom`; UUID generation has no error channel and does not need `Effect.orDie`. Foldkit's Vite plugin, examples, scaffold guidance, and lint diagnostics use this API.
+
+  Effect minor upgrades are reviewed explicitly because they can change APIs. Patch releases within 4.1 are accepted without requiring a new Foldkit release.
+
+  The Node adapter, Vite plugin, and DevTools MCP server require Node.js 22.19.0 or newer, matching the Effect 4.1 Node platform packages. Upgrade Node.js before installing these packages on Node.js 20. The Node adapter explicitly constrains `@effect/platform-node-shared` to 4.1 as well, matching the CLI and Vite plugin, so npm can resolve the Node platform packages within the supported Effect minor.
+
+  Effect 4.1 starts `Stream.callback` setup immediately. For asynchronous Mount acquisition that must stop on unmount, pass `{ interruptible: true }` as the third argument to `Effect.acquireRelease` and construct the handle after the interruptible wait. The map example and chart integration guide use this option so unmounting during a library import does not construct a handle on a detached element.
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
+## 0.169.0
+
+### Minor Changes
+
+- [#1667](https://github.com/foldkit/foldkit/pull/1667) [`b6c5fa3`](https://github.com/foldkit/foldkit/commit/b6c5fa38ee97a48795d811f43b1ec5ed0d701e87) Thanks [@Tanner-Scadden](https://github.com/Tanner-Scadden)! - Add `DragAndDrop.test.settleFocus` and `DragAndDrop.test.resolveKeyboardMove` to resolve focus and movement Commands in keyboard drag Story tests.
+
+- [#1529](https://github.com/foldkit/foldkit/pull/1529) [`39a055b`](https://github.com/foldkit/foldkit/commit/39a055b638a774568baa394ee5b2bf98fa16cd58) Thanks [@armancharan](https://github.com/armancharan)! - A default Popover stays open while focus moves within its panel. It closes when focus leaves the panel, including when focus moves into DevTools. With `contentFocus: true`, the panel has no tab stop and focus leaving it does not close the Popover. The consumer focuses a descendant and handles focus leaving the content.
+
+  The panel now handles focus leave instead of blur. Replace `Scene.blur(panel)` with `Scene.focusLeave(panel)` in Scene tests.
+
+- [#1530](https://github.com/foldkit/foldkit/pull/1530) [`2b6d8dd`](https://github.com/foldkit/foldkit/commit/2b6d8dd23cdc8907955c4ca963f8613925b71fa1) Thanks [@armancharan](https://github.com/armancharan)! - Decide Popover, Menu, and Listbox trigger clicks in update using the current Model. When a mouse press and click arrive before the next render, the click does not request a second open. A modal overlay acquires its scroll lock once, and focus leaving the panel can close it.
+
+  Trigger clicks dispatch `ClickedButton`. Add this variant to exhaustive Message matches for Popover, Menu, and Listbox. Scene tests that assert the Message emitted by a trigger click must expect `ClickedButton`, including the click following a mouse press. Popover clicks previously emitted `RequestedOpen`, `RequestedClose`, or `IgnoredMouseClick`; Menu and Listbox clicks emitted `Opened`, `Closed`, or `IgnoredMouseClick`.
+
+### Patch Changes
+
+- [#1509](https://github.com/foldkit/foldkit/pull/1509) [`45bc431`](https://github.com/foldkit/foldkit/commit/45bc43189b619a873d779fe60f516902d5cb4783) Thanks [@armancharan](https://github.com/armancharan)! - Opening an already open Popover, Menu, Listbox, or Combobox returns the current Model without Commands. Popover emits no additional `Opened` OutMessage; Menu and Listbox preserve the typeahead query and active item. For modal overlays, this prevents repeated locks from leaving the page scroll-locked after one close.
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
+- [#1521](https://github.com/foldkit/foldkit/pull/1521) [`e29eceb`](https://github.com/foldkit/foldkit/commit/e29eceb84dfae1efb80294b888a0a21806f6201b) Thanks [@armancharan](https://github.com/armancharan)! - Remove an empty shared portal root when an overlay closes. A later modal Popover, Menu, Listbox, or Combobox then creates a fresh root, keeping its panel focusable and available to pointer input and assistive technology. If another portaled element occupies the root when a modal overlay opens, the root can still become inert; this change covers reopen flows where the root becomes empty.
+
+## 0.168.0
+
+### Minor Changes
+
+- [#1638](https://github.com/foldkit/foldkit/pull/1638) [`77c7b3f`](https://github.com/foldkit/foldkit/commit/77c7b3fa12ca9dd920c8c9328a8a620fc6b586ab) Thanks [@Awjin](https://github.com/Awjin)! - Export `Meter`, `Nav`, and `Progress` on their own subpaths: `@foldkit/ui/meter`, `@foldkit/ui/nav`, and `@foldkit/ui/progress`. Consumers can import or re-export these components without using the main package entry.
+
+  These imports expose the same component APIs as the main entry.
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
+## 0.167.0
+
+### Minor Changes
+
+- [#1571](https://github.com/foldkit/foldkit/pull/1571) [`68320b8`](https://github.com/foldkit/foldkit/commit/68320b80f62eb48a09798d3126d987a9a3aec16f) Thanks [@devinjameson](https://github.com/devinjameson)! - Add complete end-anchored and dynamic-height scrolling to VirtualList. Lists can target an index, stable key, pixel offset, or the end; align rows to the start, center, end, or nearest edge; follow appended content while the user remains at the end; preserve a stable row across prepend, removal, reorder, and resize; and measure rendered row heights from estimates. Initial targets wait for asynchronously supplied items, and per-item height estimates work as a top-level view input. VirtualList now owns its container lifecycle through a Mount, so new integrations do not need Subscription wiring and programmatic scrolling works inside shadow roots.
+
+  VirtualList's Model now includes scroll-request, anchor, and measurement state, and its Message union includes container, row-measurement, and scroll-result variants. Consumers that construct a Model literal or match every Message must update those sites. Use `VirtualList.init` to create the Model. Delete `VirtualList.subscriptions.containerEvents` from existing Subscription wiring; the export is removed so TypeScript will flag remaining callers. Replace `scrollToIndexVariable(model, items, itemToRowHeightPx, index, options)` with `scrollToIndex(model, index, options)`; the view now resolves variable row heights. Use the container's `id` instead of the removed duplicate `data-virtual-list-id` attribute.
+
+  Remove the legacy `ScrolledContainer` and `MeasuredContainer` Message variants. Delete manual dispatches; the Mount now emits `ObservedContainerScroll` with the scroll position, dimensions, and row anchor, and `ResizedContainer` with both dimensions. Update exhaustive Message matches. Remove the stale `visibleWindow` and `visibleWindowVariable` helpers and `VisibleWindow` type; render through `VirtualList.view` so logical targets, measured heights, and anchors use the same layout. IDs must be unique across mounted VirtualLists, including separate shadow roots.
+
+- [#1616](https://github.com/foldkit/foldkit/pull/1616) [`5f7e247`](https://github.com/foldkit/foldkit/commit/5f7e2470d7037b97f768a5cc478e2a0d920e5b28) Thanks [@devinjameson](https://github.com/devinjameson)! - Require Foldkit 0.167.0 for the relocated `Dom` Stream helpers. Preserve a consumer's document inline styles when a drag ends by owning the temporary selection and cursor rules in a scoped style element.
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
+## 0.166.0
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
 ## 0.165.0
 
 ### Minor Changes

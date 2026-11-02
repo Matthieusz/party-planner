@@ -1,5 +1,81 @@
 # @foldkit/devtools
 
+## 0.170.0
+
+### Minor Changes
+
+- [#1852](https://github.com/foldkit/foldkit/pull/1852) [`af4b0bc`](https://github.com/foldkit/foldkit/commit/af4b0bc7b683ba7ccc2e6b789cdcca2f8ba4218e) Thanks [@devinjameson](https://github.com/devinjameson)! - Upgrade Foldkit and its companion packages to Effect 4.1. Published Effect dependencies and peer dependencies accept 4.1 patch releases through `~4.1.0` ranges. The workspace and new SPA, SSG, and SSR projects use the verified `4.1.0` release.
+
+  Update `effect` and every `@effect/*` runtime or test package in your app to a compatible 4.1 release together. Effect 4.1 replaces `Crypto.Crypto` with services in `effect/crypto`. For UUIDs, import `SecureRandom` from `effect/crypto`, acquire `SecureRandom.SecureRandom`, and call `secureRandom.uuidV4()`. Provide `BrowserCrypto.layerSecureRandom` or `NodeCrypto.layerSecureRandom`; UUID generation has no error channel and does not need `Effect.orDie`. Foldkit's Vite plugin, examples, scaffold guidance, and lint diagnostics use this API.
+
+  Effect minor upgrades are reviewed explicitly because they can change APIs. Patch releases within 4.1 are accepted without requiring a new Foldkit release.
+
+  The Node adapter, Vite plugin, and DevTools MCP server require Node.js 22.19.0 or newer, matching the Effect 4.1 Node platform packages. Upgrade Node.js before installing these packages on Node.js 20. The Node adapter explicitly constrains `@effect/platform-node-shared` to 4.1 as well, matching the CLI and Vite plugin, so npm can resolve the Node platform packages within the supported Effect minor.
+
+  Effect 4.1 starts `Stream.callback` setup immediately. For asynchronous Mount acquisition that must stop on unmount, pass `{ interruptible: true }` as the third argument to `Effect.acquireRelease` and construct the handle after the interruptible wait. The map example and chart integration guide use this option so unmounting during a library import does not construct a handle on a detached element.
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
+## 0.169.0
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
+## 0.168.0
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
+## 0.167.0
+
+### Minor Changes
+
+- [#543](https://github.com/foldkit/foldkit/pull/543) [`f863187`](https://github.com/foldkit/foldkit/commit/f86318781a4ba5ea8ff051871d93f013d64dc2f5) Thanks [@devinjameson](https://github.com/devinjameson)! - Add copy-to-clipboard buttons for Model, Message, Command, and Mount payloads in the DevTools overlay. Each button copies fully expanded, formatted JSON regardless of the inspector tree's expanded state, then briefly shows a check mark. Repeat clicks are ignored while the clipboard write is pending or the check mark is shown. The buttons use the website's snippet copy icon. Long Command and Mount arguments wrap within the inspector.
+
+- [#1616](https://github.com/foldkit/foldkit/pull/1616) [`5f7e247`](https://github.com/foldkit/foldkit/commit/5f7e2470d7037b97f768a5cc478e2a0d920e5b28) Thanks [@devinjameson](https://github.com/devinjameson)! - Require Foldkit and UI 0.167.0 for the relocated `Dom` Stream helpers. Observe the current mobile breakpoint when the overlay starts and avoid applying duplicate store and breakpoint updates.
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
+## 0.166.0
+
+### Minor Changes
+
+- [#1518](https://github.com/foldkit/foldkit/pull/1518) [`26e27fd`](https://github.com/foldkit/foldkit/commit/26e27fd937f971f20db9ad93ac38f0e3c4741aee) Thanks [@devinjameson](https://github.com/devinjameson)! - Require an `Option`-returning `read` in both `Subscription.lift` and `ManagedResource.lift`, matching `Update.foldChild`. A child can exist in only some parent states without a separate presence check and throwing extractor. Returning `None` stops its Subscriptions or releases its Managed Resources without reading child dependencies or requirements.
+
+  This is a breaking change. Rename `toChildModel` to `read` in both lift APIs. For Subscriptions, wrap an always-present child in `Option.some`:
+
+  ```ts
+  Subscription.lift(Settings.subscriptions)<Model, Message>({
+    read: model => Option.some(model.settings),
+    toParentMessage: message => Message.GotSettingsMessage({ message }),
+  })
+  ```
+
+  For an optional child, return its `Option` directly and remove any `when` used only to check that child's presence:
+
+  ```ts
+  Subscription.lift(Home.subscriptions)<Model, Message>({
+    read: model => model.maybeHome,
+    toParentMessage: message => Message.GotHomeMessage({ message }),
+  })
+  ```
+
+  ManagedResource readers already return `Option`, so only the field name changes. Subscription `when` predicates remain available for additional whole-record or per-entry conditions. A closed gate skips `read`; a missing child stops every entry, including entries omitted from a gate map.
+
+  Every lifted Subscription now exposes `GatedDependencies<ChildDependencies>` with a `maybeDependencies` field, including lifts without `when` and entries omitted from per-entry gates. Update code that directly inspects lifted dependency records accordingly. Child definitions keep their existing dependency types, services, and `keepAliveEquivalence` behavior. Migrate the DevTools overlay to the new reader contract.
+
+  DevTools now requires Foldkit 0.166.0 or newer because its overlay uses the new `read` field.
+
+### Patch Changes
+
+- Rebuild with the release's shared tooling configuration so the published packages and website use the same build inputs.
+
 ## 0.165.0
 
 ### Minor Changes

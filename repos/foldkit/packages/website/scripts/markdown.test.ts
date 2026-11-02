@@ -87,6 +87,43 @@ const y = 2</code></pre>
     )
   })
 
+  it('extracts captioned code from a collapsed snippet disclosure', () => {
+    setBody(`
+      <figure data-llm-label="HTTP Command">
+        <figcaption>HTTP Command</figcaption>
+        <div>
+          <div aria-hidden="true">
+            <div>
+              <pre data-language="typescript"><code>const FetchCount = Command.define()</code></pre>
+            </div>
+          </div>
+        </div>
+        <button>Show code</button>
+      </figure>
+    `)
+
+    expect(extractMarkdownFromRenderedDocument(document, SITE_URL)).toBe(
+      '**HTTP Command**\n\n```typescript\nconst FetchCount = Command.define()\n```',
+    )
+  })
+
+  it('rejects a captioned code block omitted from the Markdown export', () => {
+    setBody(`
+      <figure>
+        <figcaption>HTTP Command</figcaption>
+        <div aria-hidden="true">
+          <pre data-language="typescript"><code>const FetchCount = Command.define()</code></pre>
+        </div>
+      </figure>
+    `)
+
+    expect(() =>
+      extractMarkdownFromRenderedDocument(document, SITE_URL),
+    ).toThrow(
+      'Captioned code block "HTTP Command" was not followed by a fenced source block in exported Markdown.',
+    )
+  })
+
   it('skips elements marked data-llm-ignore', () => {
     setBody(`
       <p>kept paragraph</p>
@@ -214,12 +251,12 @@ describe('buildLlmsIndex', () => {
     const output = buildLlmsIndex([
       indexEntry('/ui/dialog', 'Dialog', 'Modal dialog.', 'Foldkit UI'),
       indexEntry('/ui/tabs', 'Tabs', 'Tab interface.', 'Foldkit UI'),
-      indexEntry('/core/model', 'Model', 'Single state tree.', 'Core Concepts'),
+      indexEntry('/core/model', 'Model', 'Single state tree.', 'Core'),
       indexEntry('/manifesto', 'Manifesto', 'Why Foldkit exists.', 'Docs'),
     ])
 
     const docsIndex = output.indexOf('## Docs')
-    const coreIndex = output.indexOf('## Core Concepts')
+    const coreIndex = output.indexOf('## Core')
     const uiIndex = output.indexOf('## Foldkit UI')
     expect(docsIndex).toBeGreaterThan(-1)
     expect(coreIndex).toBeGreaterThan(docsIndex)
@@ -289,7 +326,7 @@ describe('buildLlmsFull', () => {
           '/core/model',
           'Model',
           'Single state tree.',
-          'Core Concepts',
+          'Core',
           '# Model\n\nOne tree.',
           1,
         ),
@@ -302,7 +339,7 @@ describe('buildLlmsFull', () => {
     expect(output).toContain('Source: https://foldkit.dev/getting-started')
     expect(output).toContain('Source: https://foldkit.dev/core/model')
     expect(output).toContain('Section: Docs')
-    expect(output).toContain('Section: Core Concepts')
+    expect(output).toContain('Section: Core')
     expect(output).toContain('# Getting Started')
     expect(output).toContain('# Model')
     expect(output.split('\n---\n').length).toBeGreaterThan(1)
@@ -315,7 +352,7 @@ describe('buildLlmsFull', () => {
           '/core/update',
           'Update',
           'Pure transitions.',
-          'Core Concepts',
+          'Core',
           '# Update\n\nUpdate body.',
           2,
         ),
@@ -323,7 +360,7 @@ describe('buildLlmsFull', () => {
           '/core/architecture',
           'Architecture',
           'The shape of a Foldkit app.',
-          'Core Concepts',
+          'Core',
           '# Architecture\n\nArchitecture body.',
           0,
         ),
@@ -331,7 +368,7 @@ describe('buildLlmsFull', () => {
           '/core/model',
           'Model',
           'Single state tree.',
-          'Core Concepts',
+          'Core',
           '# Model\n\nModel body.',
           1,
         ),

@@ -4,7 +4,7 @@ import type { Html, HtmlBuilder } from 'foldkit/html'
 import { modifyFields } from 'foldkit/struct'
 
 import { Applicant } from './applicant'
-import { GotApplicantMessage, type Message } from './message'
+import { Message } from './message'
 import type { Model } from './model'
 
 export const view = (model: Model, h: HtmlBuilder<Message>): Html =>
@@ -20,34 +20,34 @@ export const view = (model: Model, h: HtmlBuilder<Message>): Html =>
             model: applicant.entry,
             view: Applicant.view,
             toParentMessage: message =>
-              GotApplicantMessage({ entryId: applicant.id, message }),
+              Message.GotApplicantMessage({ entryId: applicant.id, message }),
           }),
         ],
       ),
     ),
   )
 
-const foldApplicant = (entryId: string) =>
-  Update.foldChild({
-    update: Applicant.update,
-    read: (model: Model) =>
-      Option.map(
-        Array.findFirst(
-          model.applicants,
-          applicant => applicant.id === entryId,
-        ),
-        applicant => applicant.entry,
+const foldApplicant = Update.foldChildAt({
+  update: Applicant.update,
+  readAt: (model: Model, entryId: string) =>
+    Option.map(
+      Array.findFirst(model.applicants, applicant => applicant.id === entryId),
+      applicant => applicant.entry,
+    ),
+  writeAt: (model, entryId, nextEntry) =>
+    modifyFields(model, {
+      applicants: Array.map(applicant =>
+        applicant.id === entryId
+          ? modifyFields(applicant, { entry: () => nextEntry })
+          : applicant,
       ),
-    write: (model, nextEntry) =>
-      modifyFields(model, {
-        applicants: Array.map(applicant =>
-          applicant.id === entryId
-            ? modifyFields(applicant, { entry: () => nextEntry })
-            : applicant,
-        ),
-      }),
-    toParentMessage: message => GotApplicantMessage({ entryId, message }),
-  })
+    }),
+  toParentMessage: (entryId, message) =>
+    Message.GotApplicantMessage({ entryId, message }),
+})
 
-GotApplicantMessage: ({ entryId, message }) =>
-  foldApplicant(entryId)(model, message)
+export const update = (model: Model, message: Message) =>
+  Message.match<Update.Return<Model, Message>>(message, {
+    GotApplicantMessage: ({ entryId, message }) =>
+      foldApplicant(model, entryId, message),
+  })
