@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "foldkit-devtools": {
+      "command": "bun",
+      "args": ["run", "--silent", "foldkit-devtools-mcp"]
+    }
+  }
+}

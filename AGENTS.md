@@ -15,6 +15,14 @@ codebase: `codegraph query`, `codegraph context`, `codegraph callers`, and
 - `bun run check`: lint, formatting, and typechecking.
 - `bun test test/unit`: local unit tests.
 
+Foldkit DevTools MCP is configured in `.mcp.json` and `.codex/config.toml`, using
+the locally installed `@foldkit/devtools-mcp`. Restart the agent after changing
+MCP configuration. Run `bun run dev:web` and open the app in a browser for a
+Runtime to appear. Call `foldkit_list_runtimes` first; select this project's
+Runtime before inspecting its Model or dispatching Messages. The Vite plugin
+discovers the local relay automatically, and `frontend/src/entry.ts` supplies the
+Message schema for dispatch.
+
 Lint policy lives in `oxlint.config.ts`; formatting policy lives in
 `oxfmt.config.ts`. Anti-slop is owned, vendored code under
 `tools/oxlint/anti-slop/`, excluded from application linting and formatting.
