@@ -1,10 +1,12 @@
-{
-  "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "useTabs": false,
-  "tabWidth": 2,
-  "semi": true,
-  "singleQuote": false,
-  "ignorePatterns": [
+import { defineConfig } from "oxfmt";
+
+/** Formatting policy for project-owned files. */
+export default defineConfig({
+  useTabs: false,
+  tabWidth: 2,
+  semi: true,
+  singleQuote: false,
+  ignorePatterns: [
     "node_modules/**",
     "repos/**",
     "frontend/dist/**",
@@ -21,6 +23,6 @@
     ".pi/**",
     ".roo/**",
     ".windsurf/**",
-    "tools/oxlint/anti-slop/**"
-  ]
-}
+    "tools/oxlint/anti-slop/**",
+  ],
+});

@@ -16,7 +16,7 @@ codebase: `codegraph query`, `codegraph context`, `codegraph callers`, and
 - `bun test test/unit`: local unit tests.
 
 Lint policy lives in `oxlint.config.ts`; formatting policy lives in
-`.oxfmtrc.json`. Anti-slop is owned, vendored code under
+`oxfmt.config.ts`. Anti-slop is owned, vendored code under
 `tools/oxlint/anti-slop/`, excluded from application linting and formatting.
 Consult its `UPSTREAM.md` before updating it. Its Effect rule currently checks
 relative project imports, not package or path-alias imports.

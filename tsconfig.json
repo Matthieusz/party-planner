@@ -28,6 +28,7 @@
     "alchemy.run.ts",
     "drizzle.config.ts",
     "oxlint.config.ts",
+    "oxfmt.config.ts",
     "backend/**/*.ts",
     "frontend/**/*.ts",
     "test/**/*.ts"
