@@ -42,3 +42,22 @@ The Effect v4 source reference is at
 `~/.local/share/effect-solutions/effect`. Search it for implementations, types,
 and examples when the guides are insufficient. This shared checkout may contain
 local changes; never reset, overwrite, or update it without checking its status.
+
+## Local Foldkit Source
+
+Foldkit is kept outside this project's Git repository at
+`~/.local/share/effect-solutions/foldkit`, alongside Effect. Use it for canonical
+conventions, framework source, examples, and skills. References in upstream skills
+to `repos/foldkit/` mean this shared checkout; do not vendor it into the project.
+
+For a new machine, create the reference checkout:
+
+```sh
+git clone --depth 1 --branch 'foldkit@0.170.0' https://github.com/foldkit/foldkit.git ~/.local/share/effect-solutions/foldkit
+```
+
+Keep its revision aligned with the installed `foldkit` package (currently
+`0.170.0`, upstream commit `a471adb24d750ab9e8d8312edad53ff6f26d961b`). After a
+package upgrade, check the shared checkout's status before fetching and checking
+out the matching `foldkit@<version>` tag. Preserve local changes and account for
+other projects using this shared checkout.
