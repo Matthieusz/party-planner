@@ -80,7 +80,7 @@ test.skipIf(!enabled)(
     expect(me.status).toBe(200);
     const profile: unknown = await me.json();
     expect(profile).toEqual({ id: expect.any(String), name: identity.name, email: identity.email });
-    expect(await (await request("/api/auth/getSession")).json()).toMatchObject({
+    expect(await (await request("/api/auth/getSession", "{}")).json()).toMatchObject({
       _tag: "Success",
       value: { claims: { email: identity.email } },
     });
@@ -89,7 +89,7 @@ test.skipIf(!enabled)(
     const revoked = await fetch(new URL("/api/me", origin), { headers: { cookie: oldCookie } });
     expect(revoked.status).toBe(401);
     expect((await request("/api/me")).status).toBe(401);
-    expect(await (await request("/api/auth/getSession")).json()).toEqual({
+    expect(await (await request("/api/auth/getSession", "{}")).json()).toEqual({
       _tag: "Success",
       value: null,
     });
@@ -134,7 +134,7 @@ test.skipIf(!enabled)(
     expect(blocked.status).toBe(400);
     expect(await blocked.json()).toMatchObject({
       _tag: "Failure",
-      error: { _tag: "NewPasswordRejected", reason: "common" },
+      error: { _tag: "NewPasswordRejected", reason: "compromised" },
     });
     const missingCsrf = await fetch(new URL("/api/auth/signIn", origin), {
       method: "POST",
