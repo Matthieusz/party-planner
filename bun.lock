@@ -26,6 +26,7 @@
         "@effect/platform-bun": "4.1.2",
         "@effect/platform-node": "4.1.2",
         "@effect/tsgo": "^0.63.0",
+        "@foldkit/devtools": "0.170.0",
         "@foldkit/devtools-mcp": "0.26.0",
         "@foldkit/oxlint-plugin": "0.15.4",
         "@foldkit/vite-plugin": "0.29.0",
@@ -173,6 +174,8 @@
     "@floating-ui/dom": ["@floating-ui/dom@1.8.0", "", { "dependencies": { "@floating-ui/core": "^1.8.0", "@floating-ui/utils": "^0.2.12" } }, "sha512-yXSrzeHZBTZadLOlfyhCkJHNeLJnHRnRInwdZ40L7ZiaAtrBwoYlsDrX3v5zB1Utk7CLfzcOVnVVWoXEky7Ceg=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
+
+    "@foldkit/devtools": ["@foldkit/devtools@0.170.0", "", { "dependencies": { "clsx": "^2.1.1" }, "peerDependencies": { "@effect/platform-browser": "~4.1.0", "@foldkit/ui": ">=0.167.0", "effect": "~4.1.0", "foldkit": ">=0.167.0" } }, "sha512-gsmOn0gfOw+J6P8N6GGZ8w+puc+Q49AgPZLC18YZIGLp1b7F3HpQZpsn+IO6XRME5B01qmprFADFCJwpbTQNUw=="],
 
     "@foldkit/devtools-mcp": ["@foldkit/devtools-mcp@0.26.0", "", { "dependencies": { "@modelcontextprotocol/sdk": "1.29.0", "ws": "^8.21.3" }, "peerDependencies": { "effect": "~4.1.0", "foldkit": ">=0.165.0" }, "bin": { "foldkit-devtools-mcp": "dist/server.js" } }, "sha512-MhIAG28hBsGV43XuXbpschvp+D0UKNTF6YwNCDn7mYHxfaIFx56GONAAvmupuHSxZgEtbEXSmOetMB8vukxSFw=="],
 
@@ -479,6 +482,8 @@
     "chokidar": ["chokidar@5.0.0", "", { "dependencies": { "readdirp": "^5.0.0" } }, "sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw=="],
 
     "cliui": ["cliui@9.0.1", "", { "dependencies": { "string-width": "^7.2.0", "strip-ansi": "^7.1.0", "wrap-ansi": "^9.0.0" } }, "sha512-k7ndgKhwoQveBL+/1tqGJYNz097I7WOvwbmmU2AR5+magtbjPWQTS1C5vzGkBC8Ym8UWRzfKUzUUqFLypY4Q+w=="],
+
+    "clsx": ["clsx@2.1.1", "", {}, "sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA=="],
 
     "cn": ["cn@0.5.2", "", { "bin": { "cn": "bin/cn.mjs" } }, "sha512-wm10E6iuJ37rALOw3D+3cfaXXZSLNMh2uxpQn3dNICqfJM59yXqgbA9/9Iiz155j5kYNLdK6WreNdW3NQtx3OQ=="],
 

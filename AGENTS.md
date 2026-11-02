@@ -22,6 +22,8 @@ Runtime to appear. Call `foldkit_list_runtimes` first; select this project's
 Runtime before inspecting its Model or dispatching Messages. The Vite plugin
 discovers the local relay automatically, and `frontend/src/entry.ts` supplies the
 Message schema for dispatch.
+The separate `@foldkit/devtools` development dependency supplies the in-browser
+overlay, which the Vite plugin mounts at the bottom right during development.
 
 Lint policy lives in `oxlint.config.ts`; formatting policy lives in
 `oxfmt.config.ts`. Anti-slop is owned, vendored code under
