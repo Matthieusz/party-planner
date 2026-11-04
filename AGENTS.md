@@ -1,4 +1,6 @@
-# Project tooling
+# Project agent guide
+
+## Tooling and navigation
 
 Use Bun (the version is recorded in `package.json`).
 
@@ -17,6 +19,17 @@ codebase: `codegraph query`, `codegraph context`, `codegraph callers`, and
 - `vp run test`: local Vitest unit tests. Use `@effect/vitest` for Effect execution (`it.effect`, layer fixtures, and effectful properties); Scene and pure update tests use ordinary Vitest.
 - `vp run test:integration`: local Vitest integration tests (requires the local Worker for execution).
 
+Vite+ dev/build, lint, and formatting policy live in the root `vite.config.ts`.
+Keep Bun as the package manager and use Vitest through `vp test` as the test runner; `vp run check` runs
+`vp check` followed by the Effect-aware typecheck. Anti-slop is owned, vendored code under
+`tools/oxlint/anti-slop/`, excluded from application linting and formatting.
+Consult its `UPSTREAM.md` before updating it. Its Effect rule currently checks
+relative project imports, not package or path-alias imports.
+
+## MCP servers
+
+### Foldkit DevTools
+
 Foldkit DevTools MCP is configured in `.mcp.json` and `.codex/config.toml`, using
 the locally installed `@foldkit/devtools-mcp`. Restart the agent after changing
 MCP configuration. Run `vp run dev:web` and open the app in a browser for a
@@ -27,12 +40,15 @@ Message schema for dispatch.
 The separate `@foldkit/devtools` development dependency supplies the in-browser
 overlay, which the Vite plugin mounts at the bottom right during development.
 
-Vite+ dev/build, lint, and formatting policy live in the root `vite.config.ts`.
-Keep Bun as the package manager and use Vitest through `vp test` as the test runner; `vp run check` runs
-`vp check` followed by the Effect-aware typecheck. Anti-slop is owned, vendored code under
-`tools/oxlint/anti-slop/`, excluded from application linting and formatting.
-Consult its `UPSTREAM.md` before updating it. Its Effect rule currently checks
-relative project imports, not package or path-alias imports.
+### Rat-stack
+
+Rat-stack MCP is configured in `.mcp.json` and `.codex/config.toml` at
+`https://ratstack.sh/mcp`. Use `search` to find relevant law, skills, lore, and
+prompts, then `read` with the returned resource ID for source text. Use
+`backlinks`, `neighbors`, `mentions`, and `path` to explore lore relationships;
+use `execute` when one short program can replace several tool calls. Rat-stack
+supplements the local Effect and Foldkit references below; verify version-specific
+behavior against the installed packages and local source.
 
 <!-- effect-solutions:start -->
 
