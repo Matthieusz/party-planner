@@ -14,7 +14,8 @@ codebase: `codegraph query`, `codegraph context`, `codegraph callers`, and
 - `vp run format:check`: check formatting without modifying files.
 - `vp run typecheck`: tsrs with Effect diagnostics via `@effect/tsgo`.
 - `vp run check`: lint, formatting, and typechecking.
-- `vp run test`: local unit tests.
+- `vp run test`: local Vitest unit tests. Use `@effect/vitest` for Effect execution (`it.effect`, layer fixtures, and effectful properties); Scene and pure update tests use ordinary Vitest.
+- `vp run test:integration`: local Vitest integration tests (requires the local Worker for execution).
 
 Foldkit DevTools MCP is configured in `.mcp.json` and `.codex/config.toml`, using
 the locally installed `@foldkit/devtools-mcp`. Restart the agent after changing
@@ -27,7 +28,7 @@ The separate `@foldkit/devtools` development dependency supplies the in-browser
 overlay, which the Vite plugin mounts at the bottom right during development.
 
 Vite+ dev/build, lint, and formatting policy live in the root `vite.config.ts`.
-Keep Bun as the package manager and test runner; `vp run check` runs
+Keep Bun as the package manager and use Vitest through `vp test` as the test runner; `vp run check` runs
 `vp check` followed by the Effect-aware typecheck. Anti-slop is owned, vendored code under
 `tools/oxlint/anti-slop/`, excluded from application linting and formatting.
 Consult its `UPSTREAM.md` before updating it. Its Effect rule currently checks

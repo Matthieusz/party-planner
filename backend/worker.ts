@@ -9,7 +9,7 @@ import * as HttpRouter from "effect/http/HttpRouter";
 import { HttpServerRequest } from "effect/http/HttpServerRequest";
 import { Auth } from "./identity/auth.ts";
 import { AuthDb } from "./identity/database.ts";
-import { HttpLive } from "./http.ts";
+import { httpLayer } from "./http.ts";
 
 /** Same-origin Better Auth, protected application API, and frontend assets on one Worker. */
 export default class ApiWorker extends Cloudflare.Worker<ApiWorker>()(
@@ -29,7 +29,7 @@ export default class ApiWorker extends Cloudflare.Worker<ApiWorker>()(
   },
   Effect.gen(function* () {
     const auth = yield* Auth;
-    const fetch = yield* HttpRouter.toHttpEffect(HttpLive);
+    const fetch = yield* HttpRouter.toHttpEffect(httpLayer);
     return {
       fetch: Effect.gen(function* () {
         const request = yield* HttpServerRequest;

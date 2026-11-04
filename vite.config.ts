@@ -58,11 +58,11 @@ export default defineConfig({
         cache: false,
       },
       test: {
-        command: "bun test ./test/unit",
+        command: "vp test run test/unit",
         cache: false,
       },
       "test:integration": {
-        command: "bun test ./test/integration",
+        command: "vp test run test/integration",
         cache: false,
       },
       deploy: {
@@ -72,6 +72,11 @@ export default defineConfig({
     },
   },
   root: fileURLToPath(new URL("./frontend", import.meta.url)),
+  test: {
+    root: fileURLToPath(new URL(".", import.meta.url)),
+    environment: "node",
+    include: ["test/**/*.test.ts"],
+  },
   fmt: {
     useTabs: false,
     tabWidth: 2,
@@ -119,6 +124,15 @@ export default defineConfig({
       ".roo/**",
       ".windsurf/**",
       "tools/oxlint/anti-slop/**",
+    ],
+    overrides: [
+      {
+        files: ["test/**/*.test.ts"],
+        rules: {
+          // Tests construct messages as inputs and expected results, not as parent modules.
+          "foldkit/no-child-message-construction-in-root": "off",
+        },
+      },
     ],
     jsPlugins: [
       ...foldkitLint.configs.recommended.jsPlugins,

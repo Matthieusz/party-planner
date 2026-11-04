@@ -1,167 +1,155 @@
-import { expect, test } from "bun:test";
-import { createAuthClient } from "better-auth/client";
-import { Effect, Redacted } from "effect";
+// @effect-diagnostics unstableApiUsage:off
+// Effect tests intentionally use the pinned @effect/vitest integration.
+import { expect, it } from "@effect/vitest";
+import { Deferred, Effect, Fiber, Layer, Option, Redacted, Ref } from "effect";
+import { TestClock } from "effect/testing";
 import { AuthClient } from "../../../frontend/src/identity/auth-client.ts";
 import { Authenticate, CheckIdentity, SignOut } from "../../../frontend/src/identity/commands.ts";
 import { IdentityClient } from "../../../frontend/src/identity/identity-client.ts";
 import { Message } from "../../../frontend/src/identity/message.ts";
+import { RequestFailed } from "../../../frontend/src/identity/request-failed.ts";
 
-test.each(["sign-in", "sign-up"] as const)(
-  "Better Auth %s errors produce a safe failed message, not a signed-in identity",
-  async (mode) => {
-    const client = createAuthClient({
-      baseURL: "http://localhost:1339",
-      fetchOptions: {
-        customFetchImpl: async (input, init) => {
-          expect(new Request(input).url).toEndWith(`/api/auth/${mode}/email`);
-          expect(init?.method).toBe("POST");
-          return Response.json(
-            { code: "INVALID_CREDENTIALS", message: "Untrusted server error" },
-            { status: 401 },
-          );
-        },
-      },
-    });
-    const result = await Effect.runPromise(
-      Authenticate({
-        mode,
-        name: "Alex",
-        email: "alex@example.com",
-        password: Redacted.make("local-password-123"),
-      }).effect.pipe(
-        Effect.provideService(AuthClient, client),
-        Effect.provideService(IdentityClient, {
-          get: () => Promise.reject(new Error("Identity must not be requested on auth failure")),
-        }),
-      ),
-    );
-    expect(result).toEqual(
-      Message.FailedRequest({
-        message:
-          mode === "sign-up"
-            ? "Sign up failed. Use a valid email and a password of at least 8 characters."
-            : "Sign in failed. Check your email and password.",
-      }),
-    );
-    expect(JSON.stringify(result)).not.toContain("Untrusted server error");
-    expect(JSON.stringify(result)).not.toContain("local-password-123");
-  },
+const identity = { id: "identity-1", name: "Alex", email: "alex@example.com" };
+const credentials = {
+  name: "Alex",
+  email: identity.email,
+  password: Redacted.make("local-password-123"),
+};
+
+it.effect.each([Option.some(identity), Option.none()])(
+  "identity command translates application lookup values into messages",
+  (value) =>
+    Effect.gen(function* () {
+      const result = yield* CheckIdentity().effect.pipe(
+        Effect.provideService(IdentityClient, { get: Effect.succeed(value) }),
+      );
+      expect(result).toEqual(Message.LoadedIdentity({ identity: Option.getOrNull(value) }));
+    }),
 );
 
-const member = { id: "member-1", name: "Alex", email: "alex@example.com" };
-
-test.each([
-  ["valid identity", () => Response.json(member), Message.LoadedIdentity({ member })],
-  [
-    "unauthorized",
-    () => new Response(null, { status: 401 }),
-    Message.LoadedIdentity({ member: null }),
-  ],
-  [
-    "server failure",
-    () => new Response("untrusted error", { status: 503 }),
-    Message.FailedRequest({ message: "Unable to verify your session. Please try again." }),
-  ],
-  [
-    "malformed JSON",
-    () => new Response("{invalid"),
-    Message.FailedRequest({ message: "The server returned an invalid response." }),
-  ],
-  [
-    "invalid identity",
-    () => Response.json({ ...member, id: 42 }),
-    Message.FailedRequest({ message: "The server returned an invalid identity." }),
-  ],
-] as const)("identity check handles %s", async (_description, response, expected) => {
-  const result = await Effect.runPromise(
-    CheckIdentity().effect.pipe(
-      Effect.provideService(IdentityClient, { get: async () => response() }),
-    ),
-  );
-  expect(result).toEqual(expected);
-});
-
-test("identity transport errors produce a safe failure", async () => {
-  const result = await Effect.runPromise(
-    CheckIdentity().effect.pipe(
+it.effect("identity command projects only the safe failure message", () =>
+  Effect.gen(function* () {
+    const result = yield* CheckIdentity().effect.pipe(
       Effect.provideService(IdentityClient, {
-        get: () => Promise.reject(new Error("private transport details")),
+        get: Effect.fail(
+          new RequestFailed({
+            message: "Unable to verify your session.",
+            cause: Redacted.make(new Error("private transport details")),
+          }),
+        ),
       }),
-    ),
-  );
-  expect(result).toEqual(
-    Message.FailedRequest({ message: "Unable to reach the server. Please try again." }),
+    );
+    expect(result).toEqual(Message.FailedRequest({ message: "Unable to verify your session." }));
+    expect(JSON.stringify(result)).not.toContain("private transport details");
+  }),
+);
+
+it.effect.each(["sign-in", "sign-up"] as const)(
+  "successful %s passes application credentials and verifies the server identity",
+  (mode) =>
+    Effect.gen(function* () {
+      const input = { mode, ...credentials };
+      const result = yield* Authenticate(input).effect.pipe(
+        Effect.provideService(AuthClient, {
+          authenticate: (received) =>
+            Effect.sync(() => {
+              expect(received).toEqual(input);
+            }),
+          signOut: Effect.die("Unexpected sign-out"),
+        }),
+        Effect.provideService(IdentityClient, { get: Effect.succeedSome(identity) }),
+      );
+      expect(result).toEqual(Message.LoadedIdentity({ identity }));
+    }),
+);
+
+it.effect("authentication waits for capability completion before checking identity", () =>
+  Effect.gen(function* () {
+    const started = yield* Deferred.make<void>();
+    const checked = yield* Ref.make(false);
+    const pending = yield* Authenticate({ mode: "sign-in", ...credentials }).effect.pipe(
+      Effect.provideService(AuthClient, {
+        authenticate: () =>
+          Deferred.succeed(started, undefined).pipe(Effect.andThen(Effect.sleep("1 second"))),
+        signOut: Effect.die("Unexpected sign-out"),
+      }),
+      Effect.provideService(IdentityClient, {
+        get: Ref.set(checked, true).pipe(Effect.as(Option.some(identity))),
+      }),
+      Effect.forkScoped,
+    );
+    yield* Deferred.await(started);
+    expect(yield* Ref.get(checked)).toBe(false);
+    yield* TestClock.adjust("1 second");
+    expect(yield* Fiber.join(pending)).toEqual(Message.LoadedIdentity({ identity }));
+    expect(yield* Ref.get(checked)).toBe(true);
+  }),
+);
+
+it.effect("failed authentication does not request an identity", () =>
+  Effect.gen(function* () {
+    const result = yield* Authenticate({ mode: "sign-in", ...credentials }).effect.pipe(
+      Effect.provideService(AuthClient, {
+        authenticate: () => Effect.fail(new RequestFailed({ message: "Sign in failed." })),
+        signOut: Effect.die("Unexpected sign-out"),
+      }),
+      Effect.provideService(IdentityClient, { get: Effect.die("Unexpected identity lookup") }),
+    );
+    expect(result).toEqual(Message.FailedRequest({ message: "Sign in failed." }));
+  }),
+);
+
+it.layer(
+  Layer.succeed(AuthClient, {
+    authenticate: () => Effect.void,
+    signOut: Effect.die("Unexpected sign-out"),
+  }),
+)("after successful authentication", (it) => {
+  it.effect.each([
+    Option.none(),
+    Option.some(new RequestFailed({ message: "Session verification failed." })),
+  ])("does not invent an identity when verification is absent or fails", (failure) =>
+    Effect.gen(function* () {
+      const result = yield* Authenticate({ mode: "sign-in", ...credentials }).effect.pipe(
+        Effect.provideService(IdentityClient, {
+          get: Option.match(failure, {
+            onNone: () => Effect.succeedNone,
+            onSome: Effect.fail,
+          }),
+        }),
+      );
+      expect(result).toEqual(
+        Option.match(failure, {
+          onNone: () => Message.LoadedIdentity({ identity: null }),
+          onSome: ({ message }) => Message.FailedRequest({ message }),
+        }),
+      );
+    }),
   );
 });
 
-test.each(["sign-in", "sign-up"] as const)(
-  "successful %s verifies the session through the identity client",
-  async (mode) => {
-    const client = createAuthClient({
-      baseURL: "http://localhost:1339",
-      fetchOptions: {
-        retry: 0,
-        customFetchImpl: async (input) => {
-          expect(new Request(input).url).toEndWith(`/api/auth/${mode}/email`);
-          return Response.json({ token: "session", user: member });
-        },
-      },
-    });
-    const result = await Effect.runPromise(
-      Authenticate({
-        mode,
-        name: "Alex",
-        email: "alex@example.com",
-        password: Redacted.make("local-password-123"),
-      }).effect.pipe(
-        Effect.provideService(AuthClient, client),
-        Effect.provideService(IdentityClient, { get: async () => Response.json(member) }),
-      ),
-    );
-    expect(result).toEqual(Message.LoadedIdentity({ member }));
-  },
+it.effect.each([true, false])(
+  "sign-out only clears the identity on capability success (%s)",
+  (success) =>
+    Effect.gen(function* () {
+      const result = yield* SignOut().effect.pipe(
+        Effect.provideService(AuthClient, {
+          authenticate: () => Effect.die("Unexpected authentication"),
+          signOut: success
+            ? Effect.void
+            : Effect.fail(
+                new RequestFailed({
+                  message: "Sign out failed. Your session may still be active.",
+                }),
+              ),
+        }),
+      );
+      expect(result).toEqual(
+        success
+          ? Message.LoadedIdentity({ identity: null })
+          : Message.FailedRequest({
+              message: "Sign out failed. Your session may still be active.",
+            }),
+      );
+    }),
 );
-
-test.each([200, 503])(
-  "sign-out only clears identity after Better Auth succeeds (%s)",
-  async (status) => {
-    const client = createAuthClient({
-      baseURL: "http://localhost:1339",
-      fetchOptions: {
-        retry: 0,
-        customFetchImpl: async (input) => {
-          expect(new Request(input).url).toEndWith("/api/auth/sign-out");
-          return Response.json(status === 200 ? { success: true } : { message: "Unavailable" }, {
-            status,
-          });
-        },
-      },
-    });
-    const result = await Effect.runPromise(
-      SignOut().effect.pipe(Effect.provideService(AuthClient, client)),
-    );
-    expect(result).toEqual(
-      status === 200
-        ? Message.LoadedIdentity({ member: null })
-        : Message.FailedRequest({ message: "Sign out failed. Your session may still be active." }),
-    );
-  },
-);
-
-test("a browser transport failure remains a safe sign-out failure", async () => {
-  const client = createAuthClient({
-    baseURL: "http://localhost:1339",
-    fetchOptions: {
-      retry: 0,
-      customFetchImpl: async () => {
-        throw new TypeError("Network unavailable");
-      },
-    },
-  });
-  const result = await Effect.runPromise(
-    SignOut().effect.pipe(Effect.provideService(AuthClient, client)),
-  );
-  expect(result).toEqual(
-    Message.FailedRequest({ message: "Sign out failed. Your session may still be active." }),
-  );
-});

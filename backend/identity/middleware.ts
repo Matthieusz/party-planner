@@ -5,9 +5,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import * as HttpApiMiddleware from "effect/http-api/HttpApiMiddleware";
-import { TeamMember } from "../../shared/identity/team-member.ts";
+import { AuthenticatedIdentity } from "../../shared/identity/authenticated-identity.ts";
 import { Auth } from "./auth.ts";
-import { CurrentTeamMember } from "./current-team-member.ts";
+import { CurrentIdentity } from "./current-identity.ts";
 
 /** No valid session was presented. */
 export class Unauthorized extends Schema.TaggedError<
@@ -24,7 +24,7 @@ export class AuthenticationUnavailable extends Schema.TaggedError<
 export class Authentication extends HttpApiMiddleware.Service<
   Authentication,
   {
-    provides: CurrentTeamMember;
+    provides: CurrentIdentity;
   }
 >()("app/Authentication", { error: [Unauthorized, AuthenticationUnavailable] }) {
   /** Resolves the ambient Better Auth session without converting outages into anonymous access. */
@@ -38,12 +38,12 @@ export class Authentication extends HttpApiMiddleware.Service<
             .getSession()
             .pipe(Effect.mapError(() => new AuthenticationUnavailable()));
           if (session === null) return yield* new Unauthorized();
-          const identity = yield* Schema.decodeEffect(TeamMember)({
+          const identity = yield* Schema.decodeEffect(AuthenticatedIdentity)({
             id: session.user.id,
             name: session.user.name,
             email: session.user.email,
           }).pipe(Effect.mapError(() => new AuthenticationUnavailable()));
-          return yield* Effect.provideService(httpEffect, CurrentTeamMember, identity);
+          return yield* Effect.provideService(httpEffect, CurrentIdentity, identity);
         }).pipe(Effect.provide(RuntimeContext.phantom));
     }),
   );

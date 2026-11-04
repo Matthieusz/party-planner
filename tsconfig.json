@@ -15,7 +15,7 @@
     },
     "module": "Preserve",
     "moduleResolution": "Bundler",
-    "types": ["bun"],
+    "types": ["node"],
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,

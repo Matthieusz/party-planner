@@ -5,6 +5,6 @@ import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import { Api } from "../api.ts";
 
 /** Handles the public liveness endpoint. */
-export const publicLive = HttpApiBuilder.group(Api, "public", (handlers) =>
+export const healthHttpLayer = HttpApiBuilder.group(Api, "public", (handlers) =>
   handlers.handle("health", () => Effect.succeed({ ok: true as const })),
 );
