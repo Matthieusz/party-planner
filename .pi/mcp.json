@@ -6,6 +6,9 @@
         "@foldkit/devtools-mcp"
       ],
       "cwd": "."
+    },
+    "rat-stack": {
+      "url": "https://ratstack.sh/mcp"
     }
   }
 }

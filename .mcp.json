@@ -3,6 +3,9 @@
     "foldkit-devtools": {
       "command": "bun",
       "args": ["run", "--silent", "foldkit-devtools-mcp"]
+    },
+    "rat-stack": {
+      "url": "https://ratstack.sh/mcp"
     }
   }
 }

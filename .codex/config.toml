@@ -1,3 +1,6 @@
 [mcp_servers.foldkit-devtools]
 command = "bun"
 args = ["run", "--silent", "foldkit-devtools-mcp"]
+
+[mcp_servers.rat-stack]
+url = "https://ratstack.sh/mcp"
