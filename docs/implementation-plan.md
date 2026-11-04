@@ -10,16 +10,16 @@ The source of product requirements is [PRODUCT.md](../PRODUCT.md); terminology i
 
 ## Context and current state
 
-Verified against the source during planning:
+Verified during planning; authentication context updated after the fresh Better Auth replacement:
 
-- Yielded authentication, password screening, opaque sessions, and same-origin auth transport already exist.
-- `backend/current-team-member.ts` supplies authenticated identity only. It explicitly does not establish venue membership or permission.
-- `backend/schema.ts` currently contains auth tables and password rate limits, with no operational entities.
+- Alchemy's Better Auth integration provides email/password authentication and D1 sessions over same-origin HTTP. The former custom password screening and token buckets are not preserved.
+- `backend/identity/current-team-member.ts` supplies authenticated identity only. It explicitly does not establish venue membership or permission.
+- Better Auth owns its managed auth schema; there are no operational tables or application-owned migration files yet.
 - `backend/api.ts`, `backend/http.ts`, and `backend/worker.ts` provide the Effect HTTP API and request-scoped D1 runtime.
-- `frontend/src/main.ts` contains an authentication state machine and an empty signed-in operational shell. Commands are runtime-owned; update and view are pure.
-- Drizzle generates migrations under `backend/migrations/drizzle`; Alchemy applies the existing migration history. Preserve the stable `YieldedAuthDb` resource identity.
-- The installed Effect D1 client provides atomic `batch` execution, but interactive SQL transactions are unsupported. Drizzle exposing a transaction method does not make it usable on D1.
-- Bun is the package manager and test runner. Tooling is defined in `vite.config.ts`, including `vp run check`, `vp run test`, and `vp run test:integ`.
+- `frontend/src/identity/main.ts` contains an authentication state machine and an empty signed-in operational shell. Commands are runtime-owned; update and view are pure.
+- The fresh `BetterAuthDb` resource replaces the previous auth store without importing users or sessions. Alchemy manages Better Auth's migrations; introduce explicit application schema/migration ownership for operational data.
+- D1 supports atomic batches, not interactive SQL transactions. Any future ORM exposing a transaction method does not establish D1 support.
+- Bun is the package manager and test runner. Tooling is defined in `vite.config.ts`, including `vp run check`, `vp run test`, and `vp run test:integration`.
 - Installed versions include Effect 4.1.2 and Foldkit 0.170.0. Use installed APIs and the shared Foldkit checkout, not older version claims in prose documentation.
 
 ## Goals and non-goals
@@ -188,7 +188,7 @@ Corrections attach to the published revision the reporter viewed. Marketing expl
 
 ## Venue access and pilot provisioning
 
-Keep Yielded identity separate from venue staffing. A venue-owned staff directory entry may have no auth subject, which allows a lead to exist without logging in. An authenticated membership links a subject to a staff entry in the venue. Never grant access because an email address or supplied venue ID happens to match.
+Keep Better Auth identity separate from venue staffing. A venue-owned staff directory entry may have no auth subject, which allows a lead to exist without logging in. An authenticated membership links a subject to a staff entry in the venue. Never grant access because an email address or supplied venue ID happens to match.
 
 Use two operational write capabilities: `ManagePlans` and `ManageMenuTemplates`. Marketing receives the former; kitchen template maintainers receive the latter. A member can have both. Reading published plans and submitting corrections require venue membership. Direct receipt confirmation additionally requires being the designated lead for that revision and department. Marketing may record verbal receipt for those designated leads, including leads without accounts.
 
@@ -328,7 +328,7 @@ Extend the existing API under `/api/venues/:venueId`:
 
 Retain `/api/me` and public liveness behavior. Add an authenticated venue-membership lookup to choose the configured pilot venue; do not hardcode a browser-supplied venue as authorization. Route the board by event starting date; show later activity dates within the plan and overnight indicators where useful. Do not infer event duration from unknown times.
 
-Use schema-checked request/response DTOs at every process hop. Add explicit same-origin/admission protection for operational mutations; verify the policy instead of assuming Yielded's auth-command CSRF handling automatically protects new handlers. IDs, recording actor, publication time, and revision numbers are server-owned where authoritative.
+Use schema-checked request/response DTOs at every process hop. Add explicit same-origin/admission protection for operational mutations; verify the policy instead of assuming Better Auth's route-specific CSRF handling automatically protects new handlers. IDs, recording actor, publication time, and revision numbers are server-owned where authoritative.
 
 ### Create, save, publish, and print
 
@@ -413,42 +413,38 @@ The shared print document contains event/venue/room identity, date and activity 
 
 ## Files and module ownership
 
-These paths are the planned ownership map; keep cohesive modules together rather than splitting every operation into a file.
+These paths are the planned ownership map; directories with placeholders do not imply implemented functionality. Keep cohesive modules together rather than splitting every operation into a file.
 
-| Add                                 | Responsibility                                                                     |
-| ----------------------------------- | ---------------------------------------------------------------------------------- |
-| `shared/identity.ts`                | Operational IDs, refined dates/times/counts and staff/room references              |
-| `shared/event-plan.ts`              | Draft/published values, completeness, transitions, snapshot and change projections |
-| `shared/menu-template.ts`           | Reusable content schemas and pure copy/application rules                           |
-| `shared/handoff.ts`                 | Receipt and correction values and legal outcomes                                   |
-| `shared/operations-contract.ts`     | Request/response DTOs and transport-safe failure schemas                           |
-| `backend/venue-access.ts`           | Auth identity → membership/capabilities; application authority context             |
-| `backend/event-plans.ts`            | Draft, publication, cancellation and event queries                                 |
-| `backend/handoffs.ts`               | Direct/verbal receipt policy and attribution                                       |
-| `backend/corrections.ts`            | Open requests and explicit resolution                                              |
-| `backend/menu-templates.ts`         | Template writes, reads and application workflow                                    |
-| `backend/operations-storage.ts`     | D1 adapter; row codecs; guarded writes, atomic publication, command replay         |
-| `backend/operations-http.ts`        | Thin handlers, authority/admission integration, error projections                  |
-| `scripts/setup-pilot.ts`            | Idempotent trusted pilot provisioning                                              |
-| `frontend/src/operations-client.ts` | HTTP adapter with schema decoding and typed failures                               |
-| `frontend/src/route.ts`             | URL/route parsing and rendering                                                    |
-| `frontend/src/event-board/`         | Board Model/Message/update/view/Commands                                           |
-| `frontend/src/event-editor/`        | Draft editor, conflict review, draft print preview                                 |
-| `frontend/src/published-plan/`      | Published reference/history, shared print view, handoffs/corrections               |
-| `frontend/src/menu-templates/`      | Kitchen template editor and selection UI                                           |
+| Add                            | Responsibility                                                            |
+| ------------------------------ | ------------------------------------------------------------------------- |
+| `shared/venue-access/`         | Operational IDs, refined values and staff/room references                 |
+| `shared/event-plan/`           | Draft/published values, completeness, transitions and transport contracts |
+| `shared/menu-template/`        | Reusable content schemas and pure copy/application rules                  |
+| `shared/handoff/`              | Receipt and correction values and legal outcomes                          |
+| `backend/venue-access/`        | Auth identity → membership/capabilities; application authority context    |
+| `backend/event-plan/`          | Draft, publication, cancellation and event queries                        |
+| `backend/handoff/`             | Receipt and correction workflows                                          |
+| `backend/menu-template/`       | Template writes, reads and application workflow                           |
+| `backend/<domain>/`            | Domain-specific HTTP and persistence adapters                             |
+| `scripts/setup-pilot.ts`       | Idempotent trusted pilot provisioning                                     |
+| `frontend/src/<feature>/`      | Feature-owned HTTP adapters with schema decoding and typed failures       |
+| `frontend/src/route.ts`        | URL/route parsing and rendering                                           |
+| `frontend/src/event-board/`    | Board Model/Message/update/view/Commands                                  |
+| `frontend/src/event-editor/`   | Draft editor, conflict review, draft print preview                        |
+| `frontend/src/published-plan/` | Published reference/history, shared print view, handoffs/corrections      |
+| `frontend/src/menu-templates/` | Kitchen template editor and selection UI                                  |
 
 Change:
 
-- `backend/schema.ts`: operational tables and constraints, preserving auth exports.
-- `backend/migrations/drizzle/`: generated forward migrations and explicit publication-trigger SQL; do not edit applied history.
-- `backend/api.ts`, `backend/http.ts`, `backend/worker.ts`: contract groups, handlers, authority/admission and request-scoped layer wiring. Do not let server runtime dependencies leak into shared/browser schemas.
-- `frontend/src/main.ts`, `message.ts`, `commands.ts`, `entry.ts`: root composition, routed child messages, client resources and scoped refresh subscriptions. Preserve `Message` schema integration for DevTools.
+- Add an application schema and committed migrations for operational tables, constraints, and publication-trigger SQL. Keep their ownership separate from Better Auth's managed schema; do not edit applied history.
+- `backend/api.ts`, `backend/http.ts`, `backend/worker.ts`: compose feature contract groups, handlers, authority/admission and request-scoped layers. Do not let server runtime dependencies leak into shared/browser schemas.
+- `frontend/src/identity/` and `frontend/src/entry.ts`: evolve root composition, routed child messages, client resources and scoped refresh subscriptions. Preserve `Message` schema integration for DevTools.
 - `frontend/src/styles.css`: shared screen/print rules, using the good-css skill when implementation reaches styles.
 - `tsconfig.json`: include `shared/**/*.ts` and `scripts/**/*.ts` so new ownership areas receive strict checks.
 - `vite.config.ts`: pilot setup task and local integration task wiring if needed; retain Bun, lint/format and Effect-aware typecheck policies.
 - `README.md`: implementation status and local pilot/test instructions when capabilities actually land; correct stale version prose when touching it.
 
-Remove the three placeholder operational-area cards once the event board replaces the signed-in shell. No auth system replacement or compatibility layer is planned.
+Remove the three placeholder operational-area cards once the event board replaces the signed-in shell. Retain the current Better Auth integration; no further auth replacement or compatibility layer is planned.
 
 ## RGR TDD plan and implementation sequence
 
@@ -472,7 +468,7 @@ Vertical slices:
 4. Marketing and kitchen capabilities grant the intended writes independently; ordinary staff retain read/correction access.
 5. A directory lead without a login can be selected without granting that person any implicit auth membership.
 
-Migration evidence: extend `test/unit/database-migrations.test.ts` for fresh and existing databases, preserving auth records/history and applicable constraints. Add `test/integ/venue-access.test.ts` against the local Worker/D1. Extend auth/root-model tests only for the changed post-authentication behavior.
+Migration evidence: add application migration tests for fresh and existing databases, preserving Better Auth records/schema and applicable operational constraints. Add `test/integration/venue-access.test.ts` against the local Worker/D1. Extend auth/root-model tests only for the changed post-authentication behavior.
 
 ### Milestone 2 — Thin publication and printing path
 
@@ -489,7 +485,7 @@ Vertical slices:
 7. Edit the draft after the candidate is read but before commit; the stale candidate cannot publish. A stale save after publication also fails without overwriting the newly versioned draft.
 8. Print a newer revision and retrieve the old one separately; neither route reads a mutable draft.
 
-Tests: `test/unit/event-plan.test.ts`, `test/integ/event-plans.test.ts`, `test/integ/publication-concurrency.test.ts`, and `test/unit/published-plan-view.test.ts`. Use public HTTP results and revision/history reads for assertions. Adapter failure injection may live at the D1 seam in a disposable test fixture, never as production bypass endpoints.
+Tests: `test/unit/event-plan.test.ts`, `test/integration/event-plans.test.ts`, `test/integration/publication-concurrency.test.ts`, and `test/unit/published-plan-view.test.ts`. Use public HTTP results and revision/history reads for assertions. Adapter failure injection may live at the D1 seam in a disposable test fixture, never as production bypass endpoints.
 
 Exit gate: atomicity, concurrency, migration and replay evidence on local D1. Do not expand the application around an unproven publication implementation.
 
@@ -521,7 +517,7 @@ Vertical slices:
 5. A staff correction stays open after unrelated publication, then resolves with an explicit corrected revision or a required no-change explanation visible to the requester. Reject references to another event/venue or conflicting concurrent resolution.
 6. Cancellation publishes from the last published snapshot, creates fresh receipt obligations and prominent labels, and preserves history. Draft edits/template application/publication after cancellation fail; receipts still work.
 
-Tests: `test/integ/handoffs.test.ts`, `test/integ/corrections.test.ts`, cancellation slices in `event-plans.test.ts`, plus domain and published-view transitions. Do not test actual external delivery: the pilot has no automated sender.
+Tests: `test/integration/handoffs.test.ts`, `test/integration/corrections.test.ts`, cancellation slices in `event-plans.test.ts`, plus domain and published-view transitions. Do not test actual external delivery: the pilot has no automated sender.
 
 ### Milestone 5 — Reusable menu templates
 
@@ -535,7 +531,7 @@ Vertical slices:
 4. Editing the template leaves its existing event copy and published snapshots unchanged.
 5. A stale template or draft version prevents application and preserves the editor's local work; cross-venue references fail.
 
-Tests: `test/unit/menu-template.test.ts`, `test/integ/menu-templates.test.ts`, and the template/editor submodel's observable transitions.
+Tests: `test/unit/menu-template.test.ts`, `test/integration/menu-templates.test.ts`, and the template/editor submodel's observable transitions.
 
 ### Milestone 6 — Event board, freshness, and service rehearsal
 
@@ -554,7 +550,7 @@ Manually inspect a short plan and a long multi-page plan in browser print/save-t
 
 ## Verification and handoff
 
-For each milestone, run focused tests while implementing, then `vp run check`, `vp run test`, and relevant local `vp run test:integ` coverage with the local Worker configured. Do not report skipped integration tests as passing D1 evidence. Add a build check when changing browser imports, shared contracts, routing or print assets. Keep verification local; deployment requires its own explicit request.
+For each milestone, run focused tests while implementing, then `vp run check`, `vp run test`, and relevant local `vp run test:integration` coverage with the local Worker configured. Do not report skipped integration tests as passing D1 evidence. Add a build check when changing browser imports, shared contracts, routing or print assets. Keep verification local; deployment requires its own explicit request.
 
 Before pilot use, preserve existing auth behavior, verify same-origin mutation admission and venue isolation, prove publication semantics on actual D1, inspect printed output, and complete the service rehearsal. Document any failed gate rather than replacing it with an unsupported claim.
 

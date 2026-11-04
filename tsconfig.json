@@ -26,10 +26,10 @@
   },
   "include": [
     "alchemy.run.ts",
-    "drizzle.config.ts",
     "vite.config.ts",
     "backend/**/*.ts",
     "frontend/**/*.ts",
+    "shared/**/*.ts",
     "test/**/*.ts"
   ]
 }

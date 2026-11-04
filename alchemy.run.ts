@@ -6,7 +6,7 @@ import * as Schema from "effect/Schema";
 import * as Effect from "effect/Effect";
 import ApiWorker from "./backend/worker.ts";
 
-/** Owns the application Worker, D1, and committed auth migrations. */
+/** Owns the Worker and fresh D1 store; Better Auth registers its managed schema migrations. */
 export default Alchemy.Stack(
   "VenueOperations",
   { providers: Cloudflare.providers(), state: Alchemy.localState() },

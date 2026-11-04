@@ -25,20 +25,16 @@ export default defineConfig({
         command: "vp build",
         cache: false,
       },
-      "db:generate": {
-        command: "drizzle-kit generate",
-        cache: false,
-      },
       typecheck: {
         command: "effect-tsgo tsrs --noEmit",
         cache: false,
       },
       lint: {
-        command: "vp lint --disable-nested-config",
+        command: "effect-tsgo --tsrs-lint vp lint --disable-nested-config",
         cache: false,
       },
       "lint:fix": {
-        command: "vp lint --disable-nested-config --fix",
+        command: "effect-tsgo --tsrs-lint vp lint --disable-nested-config --fix",
         cache: false,
       },
       format: {
@@ -50,11 +46,11 @@ export default defineConfig({
         cache: false,
       },
       check: {
-        command: "vp check && vp run typecheck",
+        command: "effect-tsgo --tsrs-lint vp check && vp run typecheck",
         cache: false,
       },
       fix: {
-        command: "vp check --fix && vp run typecheck",
+        command: "effect-tsgo --tsrs-lint vp check --fix && vp run typecheck",
         cache: false,
       },
       build: {
@@ -65,8 +61,8 @@ export default defineConfig({
         command: "bun test ./test/unit",
         cache: false,
       },
-      "test:integ": {
-        command: "bun test ./test/integ",
+      "test:integration": {
+        command: "bun test ./test/integration",
         cache: false,
       },
       deploy: {

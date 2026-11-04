@@ -1,10 +1,11 @@
 // @effect-diagnostics unstableApiUsage:off
 // HTTP tests intentionally exercise the Effect HTTP router.
-import { Sessions } from "@yielded/auth";
+import { BetterAuthApiError } from "@alchemy.run/better-auth/Errors";
+import { APIError } from "better-auth";
 import { expect, test } from "bun:test";
 import { Effect, Layer } from "effect";
 import * as HttpRouter from "effect/http/HttpRouter";
-import { Auth } from "../../backend/auth.ts";
+import { Auth } from "../../backend/identity/auth.ts";
 import { HttpLive } from "../../backend/http.ts";
 
 test("public liveness works but a missing session cannot access the protected identity", async () => {
@@ -27,7 +28,8 @@ test("public liveness works but a missing session cannot access the protected id
 
 test("session storage outages return 503 without treating them as missing credentials", async () => {
   const auth = Layer.mock(Auth, {
-    getSession: () => Effect.fail(Sessions.SessionUnavailable.make({})),
+    getSession: () =>
+      Effect.fail(BetterAuthApiError.fromAPIError(new APIError("INTERNAL_SERVER_ERROR"))),
   });
   const { handler, dispose } = HttpRouter.toWebHandler(HttpLive.pipe(Layer.provide(auth)), {
     disableLogger: true,
