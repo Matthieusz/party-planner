@@ -58,6 +58,19 @@ properties. Use `it.live` only when real runtime services are needed. Scene and
 pure update tests remain ordinary Vitest tests. Vendored anti-slop rules live
 under `tools/oxlint/anti-slop/`; consult its `UPSTREAM.md` before changing them.
 
+### Continuous integration
+
+[GitHub Actions](./.github/workflows/ci.yml) runs on pull requests and pushes to
+`main`. Checks (lint, formatting, and Effect-aware typechecking), unit tests, and
+the frontend production build run in parallel on separate runners. This isolation
+prevents the import-fence test's temporary source files from affecting checks.
+
+The official `setup-vp` action installs the project's pinned Vite+ and Bun
+versions, uses Node.js 24, caches package downloads, and installs dependencies
+with a frozen lockfile. New commits cancel superseded runs. CI does not deploy
+or start the local Worker; auth integration verification remains a separate
+local step below.
+
 ## UI components (Foldcn)
 
 [Foldcn](https://foldcn.elianiva.com/) is configured in `components.json` with
