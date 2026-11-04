@@ -121,6 +121,27 @@ of HTTP and persistence; the Worker supplies implementations. Placeholder
 folders mark planned capabilities, not implemented functionality. Shared UI
 components and composition roots remain outside individual capabilities.
 
+### Import fence
+
+`vp run lint` (also `vp run check`) enforces static import and re-export rules in
+`vite.config.ts`, including type-only imports:
+
+- `shared/**` is pure domain code: no frontend/backend imports, HTTP, database,
+  or provider dependencies.
+- `frontend/**` cannot import backend modules or server runtime packages. Import
+  portable contracts from `shared/` instead.
+- `frontend/src/app/**`, frontend `commands.ts`, and backend `application.ts`,
+  `application/**`, `workflow.ts`, and `workflows/**` own orchestration. They use
+  application-owned interfaces, not vendor packages or local `adapters/`,
+  `providers/`, `database.ts`, `http.ts`, or `provider.ts` implementations.
+- Composition roots and adapter modules may import vendors. Co-located interface
+  declarations remain usable by orchestration (for example `AuthClient`); wire
+  their concrete Layers at the composition root.
+
+Keep new orchestration modules within these checked paths, and extend the fence
+when introducing a new vendor or adapter naming convention. The regression test
+at `test/unit/platform/import-fence.test.ts` exercises the actual lint configuration.
+
 The `@alchemy.run/better-auth` integration supplies request-scoped database access,
 a managed signing secret, and automatic schema migrations through `CloudflareD1`.
 Auth tables are not application-owned Drizzle tables; there is no separate

@@ -4,6 +4,30 @@ import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite-plus";
 
+const browserImportFence = [
+  {
+    regex: "(^|/)backend(/|$)",
+    message: "Browser modules must use shared contracts, not backend runtime modules.",
+  },
+  {
+    regex: "^(@alchemy\\.run/|alchemy(/|$)|@effect/platform-node(/|$)|cloudflare:|node:)",
+    message: "Server runtime dependencies do not belong in browser modules.",
+  },
+];
+
+const orchestrationImportFence = [
+  {
+    regex: "(^|/)(adapters|providers)(/|$)|(^|/)(database|http|provider)(\\.[^/]+)?$",
+    message:
+      "Orchestration depends on application-owned interfaces; wire adapters at composition roots.",
+  },
+  {
+    regex:
+      "^(@alchemy\\.run/|alchemy(/|$)|better-auth(/|$)|kysely(/|$)|@effect/(platform|sql)|effect/(http|http-api|sql)(/|$)|cloudflare:|node:)",
+    message: "Orchestration must not depend directly on vendor adapters.",
+  },
+];
+
 export default defineConfig({
   run: {
     tasks: {
@@ -126,6 +150,61 @@ export default defineConfig({
       "tools/oxlint/anti-slop/**",
     ],
     overrides: [
+      {
+        files: ["shared/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            {
+              patterns: [
+                {
+                  regex: "(^|/)(backend|frontend)(/|$)|^@/",
+                  message: "Shared domain modules must not depend on either runtime.",
+                },
+                {
+                  regex:
+                    "^(effect/(http|http-api|sql|unstable)(/|$)|@effect/(platform|sql)|@alchemy\\.run/|alchemy(/|$)|better-auth(/|$)|kysely(/|$)|cloudflare:|node:)|(^|/)(adapters|providers|http|database|provider)(/|\\.|$)",
+                  message: "Keep HTTP, database, and provider code out of pure domain modules.",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        files: ["frontend/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            {
+              patterns: browserImportFence,
+            },
+          ],
+        },
+      },
+      {
+        files: ["frontend/src/app/**", "frontend/src/**/commands.ts"],
+        rules: {
+          // Overrides replace rule options: retain the browser fence here too.
+          "no-restricted-imports": [
+            "error",
+            {
+              patterns: [...browserImportFence, ...orchestrationImportFence],
+            },
+          ],
+        },
+      },
+      {
+        files: [
+          "backend/**/application.ts",
+          "backend/**/application/**",
+          "backend/**/workflow.ts",
+          "backend/**/workflows/**",
+        ],
+        rules: {
+          "no-restricted-imports": ["error", { patterns: orchestrationImportFence }],
+        },
+      },
       {
         files: ["test/**/*.test.ts"],
         rules: {
