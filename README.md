@@ -20,7 +20,7 @@ secret, and applies Better Auth's managed schema migrations. No manually supplie
 signing secret or cloud deployment is needed. Local state lives under the ignored
 `.alchemy/` directory; preserve it to retain resource identities and signing secrets.
 
-Create an identity to enter the Live Operations shell with Management, Kitchen,
+Create an identity to enter the Live Operations shell with Marketing, Kitchen,
 and Service. The UI verifies identity through protected `/api/me`; no localStorage
 profile is authoritative. Better Auth owns the HttpOnly session cookie. Passwords
 remain redacted in Foldkit model/messages and are unwrapped only for authentication.
@@ -44,12 +44,18 @@ Use the pinned Bun version in `package.json`. Tasks are defined in the root
 
 ```sh
 vp run check         # lint, formatting, Effect-aware strict typecheck
-vp run test          # Bun unit tests, no infrastructure needed
+vp run test          # Vitest unit tests, no infrastructure needed
 vp run build         # typecheck and production frontend build
 ```
 
-Vite+ owns development, linting, formatting, and frontend builds. Keep the
-`vite` dependency and override aligned with Vite+. Vendored anti-slop rules live
+Vite+ owns development, Vitest execution, linting, formatting, and frontend builds.
+Bun remains the package manager, not the test runner. Keep the `vite` dependency
+and override aligned with Vite+, and pin `vitest` and its override to the bundled
+version reported by `vp toolchain vitest`. Effect execution tests use the pinned
+`@effect/vitest` integration: `it.effect` supplies a per-test Scope and test
+services, `it.layer` supplies layer fixtures, and `it.effect.prop` runs effectful
+properties. Use `it.live` only when real runtime services are needed. Scene and
+pure update tests remain ordinary Vitest tests. Vendored anti-slop rules live
 under `tools/oxlint/anti-slop/`; consult its `UPSTREAM.md` before changing them.
 
 ## UI components (Foldcn)
@@ -69,6 +75,18 @@ Foldkit versions. The base light/dark theme is in `frontend/src/foldcn.css`;
 class selects the dark theme. Component docs are available at
 `https://foldcn.elianiva.com/docs/<name>.md`.
 
+## Naming conventions
+
+- Use kebab-case for files and folders, PascalCase for schemas and services,
+  and camelCase for functions and Layer exports (with a `Layer` suffix).
+- Name Foldkit Commands as imperatives (such as `CheckIdentity` and `SignOut`)
+  and Messages as facts (such as `UpdatedEmail` and `SubmittedAuthForm`).
+- Name tests for their seam within domain folders: `scene.test.ts` for Foldkit
+  Scene interactions, `update.test.ts` for direct transitions, and `story.test.ts`
+  only for Story pipelines. Keep command and adapter execution tests separate.
+- Name request context for what it proves: `CurrentIdentity` establishes an
+  authenticated identity, not membership or authorization.
+
 ## Architecture
 
 ```text
@@ -80,7 +98,7 @@ Cloudflare Worker
    ├── /api/auth/*     (Alchemy Better Auth → BetterAuthDb)
    └── Effect HttpApi
          ├── GET /api/health (public)
-         └── GET /api/me     (Authentication → CurrentTeamMember)
+         └── GET /api/me     (Authentication → CurrentIdentity)
 ```
 
 | Path                                | Responsibility                                                    |
@@ -147,7 +165,7 @@ properties still apply.
 - Protected responses expose only `id`, `name`, and `email`, not session tokens.
 - Missing sessions return 401; typed lookup failures return 503. Unexpected
   defects remain server errors rather than being disguised as missing credentials.
-- Authentication is not Organization membership or Venue authorization.
+- Authentication is not Venue Membership or Venue authorization.
 - Operational Areas remain an empty shell, not seeded operational data.
 - Sign-up is open. Email verification, password recovery, invitations, and
   membership/venue authorization are not configured. Add these before serving
@@ -155,8 +173,8 @@ properties still apply.
 
 ### Future operational authorization
 
-`CurrentTeamMember` establishes identity only. When operational features are
-implemented, resolve Organization membership and Venue-specific permissions as
+`CurrentIdentity` establishes identity only. When operational features are
+implemented, resolve Venue Membership and Venue-specific permissions as
 server-side application capabilities, and require the appropriate capability
 for every operational read and write. Do not treat a session, a browser-supplied
 Venue, or hidden UI controls as authorization. Wire implementations at the

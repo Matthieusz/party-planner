@@ -1,4 +1,4 @@
-# Party Planner
+# Venue Operations
 
 ## Working product direction
 

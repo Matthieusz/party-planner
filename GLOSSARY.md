@@ -1,4 +1,4 @@
-# Party Planner
+# Venue Operations
 
 An event-coordination product initially focused on hotels with multiple event rooms.
 
@@ -7,6 +7,15 @@ An event-coordination product initially focused on hotels with multiple event ro
 **Venue**:
 A hotel, banquet hall, or other event-hosting establishment that the product serves.
 _Avoid_: Account, organization, tenant
+
+**Authenticated Identity**:
+A person whose identity has been verified by signing in. Authentication alone does not establish Venue Membership or access.
+
+**Staff Member**:
+A person recorded in a Venue's staff directory. A Staff Member may be a designated lead without having a login.
+
+**Venue Membership**:
+The relationship linking an Authenticated Identity to a Staff Member at a Venue. An Authenticated Identity can exist without Venue Membership.
 
 **Room**:
 A physical event space within a Venue. Different Rooms can host different Events at the same time.
